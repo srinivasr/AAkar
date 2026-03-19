@@ -1,19 +1,107 @@
 from neo4j import GraphDatabase
+from neo4j.graph import Node, Relationship, Path
 from app.core.config import settings
+
 
 class Neo4jClient:
     def __init__(self):
         self.driver = GraphDatabase.driver(
             settings.NEO4J_URI,
-            auth=(settings.NEO4J_USERNAME, settings.NEO4J_PASSWORD)
+            auth=(settings.NEO4J_USERNAME, settings.NEO4J_PASSWORD),
         )
 
     def close(self):
         self.driver.close()
 
     def run_query(self, query: str, parameters: dict = None):
+        """Run a Cypher query and return results as list of dicts."""
         with self.driver.session() as session:
             result = session.run(query, parameters)
             return [record.data() for record in result]
+
+    # ---- Schema introspection ----
+
+    def get_schema(self) -> str:
+        """Fetch labels, relationship types, and property keys from Neo4j
+        and return a human-readable schema string for the LLM prompt."""
+        with self.driver.session() as session:
+            labels = [r["label"] for r in session.run("CALL db.labels() YIELD label RETURN label")]
+            rel_types = [r["relationshipType"] for r in session.run("CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType")]
+            prop_keys = [r["propertyKey"] for r in session.run("CALL db.propertyKeys() YIELD propertyKey RETURN propertyKey")]
+
+        lines = [
+            "Node Labels: " + ", ".join(labels) if labels else "Node Labels: (none)",
+            "Relationship Types: " + ", ".join(rel_types) if rel_types else "Relationship Types: (none)",
+            "Property Keys: " + ", ".join(prop_keys) if prop_keys else "Property Keys: (none)",
+        ]
+        return "\n".join(lines)
+
+    # ---- Raw record query (for graph extraction) ----
+
+    def run_read_query_raw(self, query: str, parameters: dict = None):
+        """Execute a read Cypher query and return raw Record objects
+        so we can inspect Node/Relationship/Path types."""
+        with self.driver.session() as session:
+            result = session.run(query, parameters)
+            return list(result)
+
+    # ---- Graph data extraction for vis-network ----
+
+    @staticmethod
+    def extract_graph(records) -> dict:
+        """Walk raw Neo4j records and extract nodes and edges for vis-network.
+
+        Returns: { "nodes": [...], "edges": [...] }
+        Each node: { id, label, title (tooltip), properties }
+        Each edge: { from, to, label, properties }
+        """
+        nodes_map = {}
+        edges_list = []
+
+        def _add_node(node: Node):
+            nid = node.element_id
+            if nid not in nodes_map:
+                node_labels = list(node.labels)
+                nodes_map[nid] = {
+                    "id": nid,
+                    "label": node_labels[0] if node_labels else "Unknown",
+                    "title": "\n".join(f"{k}: {v}" for k, v in dict(node).items()),
+                    "properties": dict(node),
+                    "group": node_labels[0] if node_labels else "Unknown",
+                }
+
+        def _add_relationship(rel: Relationship):
+            _add_node(rel.start_node)
+            _add_node(rel.end_node)
+            edges_list.append({
+                "from": rel.start_node.element_id,
+                "to": rel.end_node.element_id,
+                "label": rel.type,
+                "properties": dict(rel),
+            })
+
+        def _process_value(val):
+            if isinstance(val, Node):
+                _add_node(val)
+            elif isinstance(val, Relationship):
+                _add_relationship(val)
+            elif isinstance(val, Path):
+                for node in val.nodes:
+                    _add_node(node)
+                for rel in val.relationships:
+                    _add_relationship(rel)
+            elif isinstance(val, list):
+                for item in val:
+                    _process_value(item)
+
+        for record in records:
+            for value in record.values():
+                _process_value(value)
+
+        return {
+            "nodes": list(nodes_map.values()),
+            "edges": edges_list,
+        }
+
 
 neo4j_client = Neo4jClient()
