@@ -9,7 +9,7 @@ The robust Python-based backend for **Civix AI**. It connects to a **Neo4j Knowl
 - **Framework**: FastAPI (Asynchronous, fast, and highly performant)
 - **Database**: Neo4j (Graph Database for profound relationship tracking)
 - **NLP/LLM**: Ollama (Locally hosted LLM for secure, private analysis)
-- **Data Processing**: Pandas, Numpy
+- **Data Processing**: Pandas, Numpy, OpenCV, Tesseract OCR
 
 ---
 
@@ -20,13 +20,14 @@ backend/
  ├── app/
  │   ├── api/             # FastAPI Route Handlers (Endpoints)
  │   ├── core/            # Configuration, Security, Middlewares
- │   ├── domain/          # Pydantic Models for Validation
+ │   ├── domain/          # Pydantic Models & Business/OCR Services
  │   ├── infrastructure/  # Neo4j Driver Connection & LLM Integration
  │   └── main.py          # Application Entry Point
+ ├── data/                # Uploaded datasets (voters, complaints)
+ ├── scripts/             # Utility scripts (reset_db.py, count_all.py, etc.)
+ ├── tests/               # Backend testing files
  ├── .env                 # Environment variables (Neo4j URI, Passwords)
  ├── requirements.txt     # Python dependencies
- ├── reset_db.py          # Utility script to wipe the database
- ├── count_all.py         # Utility script to check node counts
  └── README.md            # Backend Documentation
 ```
 
@@ -38,6 +39,11 @@ backend/
 - **Python 3.9+**
 - **Neo4j Database**: You can use Neo4j Desktop, Neo4j Aura (Cloud), or a local Docker instance.
 - **Ollama**: Install [Ollama](https://ollama.ai/) and pull your required model (e.g., `ollama run llama3`).
+- **OCR System Dependencies**:  
+  You must install Tesseract and Poppler on your host system to process PDF uploads natively:
+  ```bash
+  sudo apt-get install tesseract-ocr tesseract-ocr-hin poppler-utils
+  ```
 
 ### 2. Installation Setup
 

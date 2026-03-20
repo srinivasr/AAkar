@@ -63,6 +63,9 @@ Our intelligence engine is powered by three main pillars:
 - Analyzes complaint sentiment and extracts core topics from unstructured text.
 - Provides actionable, natural-language insights directly to the dashboard (e.g., *"Booth 23 shows high risk of water infrastructure failure. Deploy inspection team immediately."*).
 
+### 4. Automated Data Ingestion (OCR)
+- Processes raw PDF voter lists into structured data using Optical Character Recognition (Tesseract) and layout detection (OpenCV).
+
 ---
 
 ## 📂 Project Structure
@@ -73,6 +76,9 @@ This is a monorepo containing both the FastAPI graphical backend and the React f
 civix_ai/
  ├── backend/            # FastAPI, Neo4j connection, LLM integration
  │   ├── app/            # Main application logic & endpoints
+ │   ├── data/           # Upoaded CSVs and pipeline data
+ │   ├── scripts/        # Database seeding & utility scripts
+ │   ├── tests/          # Pytest backend suites
  │   ├── requirements.txt
  │   └── README.md       # Backend-specific instructions
  │

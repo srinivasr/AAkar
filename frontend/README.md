@@ -19,7 +19,7 @@ The presentation layer of **Civix AI**. Built with speed, reactivity, and a prem
 frontend/
  ├── public/             # Static Assets
  ├── src/
- │   ├── components/     # Reusable UI Blocks (Glassmorphic Panels, Ask Panel)
+ │   ├── components/     # Reusable UI Blocks (Glassmorphic Panels, Ask Panel, Upload Panel)
  │   ├── pages/          # Main Views (Dashboard)
  │   ├── App.css         # Global Styles & Theming Variables
  │   ├── App.jsx         # Main React Component & Routing
