@@ -1,16 +1,77 @@
-# React + Vite
+# 🎨 Civix AI - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The presentation layer of **Civix AI**. Built with speed, reactivity, and a premium aesthetic in mind. It uses a modern glassmorphic design system and integrates interactive network structures to represent the Knowledge Graph natively in the browser.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠 Tech Stack
 
-## React Compiler
+- **Framework**: React 19 + Vite
+- **Styling**: Vanilla CSS (Dark Theme + Glassmorphism)
+- **Graph Visualization**: `vis-network` & `vis-data`
+- **Tooling**: ESLint, Node.js
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 📂 Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```text
+frontend/
+ ├── public/             # Static Assets
+ ├── src/
+ │   ├── components/     # Reusable UI Blocks (Glassmorphic Panels, Ask Panel)
+ │   ├── pages/          # Main Views (Dashboard)
+ │   ├── App.css         # Global Styles & Theming Variables
+ │   ├── App.jsx         # Main React Component & Routing
+ │   └── main.jsx        # React DOM Entry Point
+ ├── package.json        # Dependencies and Scripts
+ ├── vite.config.js      # Vite Configurations
+ └── README.md           # Frontend Documentation
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- **Node.js** (v18.x or later)
+- **npm** (v9.x or later)
+
+### 2. Installation
+
+Navigate to the frontend directory and install the necessary dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+### 3. Running the Development Server
+
+Fire up the Vite server with Hot Module Replacement (HMR) capabilities:
+
+```bash
+npm run dev
+```
+
+The frontend will be instantly accessible, normally at: `http://localhost:5173`
+
+*(Note: Make sure the FastAPI backend is concurrently running on port 8000 so the frontend can successfully retrieve and display the graph data!)*
+
+---
+
+## 💠 Design Principles
+
+The UI of Civix AI is built around the concept of a **Living Dashboard**:
+- **Premium Aesthetics**: Deep, carefully curated custom dark palettes combined with vibrant, purposeful accent colors.
+- **Glassmorphism Integration**: Floating panels and transparent blurs that bring the interactive Knowledge Graph to the forefront.
+- **Dynamic Interaction**: Utilizes `vis-network` to allow users to physically drag, zoom, and explore connections within the civic dataset.
+
+---
+
+## 🔧 Scripts Available
+
+- `npm run dev`: Starts the development server.
+- `npm run build`: Bundles the application for production.
+- `npm run preview`: Locally previews the production build.
+- `npm run lint`: Runs ESLint to verify code quality.

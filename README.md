@@ -1,202 +1,131 @@
-# 🚀 Civix AI  
-### 🧠 AI-Powered Booth Civic Intelligence Platform 
+<div align="center">
+  
+# 🏛️ Civix AI
+**AI-Powered Booth Civic Intelligence Platform**
 
-<p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?size=28&duration=3000&color=1E90FF&center=true&vCenter=true&width=700&lines=AI-Powered+Booth+Intelligence;Graph-Based+Civic+Analytics;Predictive+Governance+Engine" />
-</p>
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Neo4j](https://img.shields.io/badge/Neo4j-018bff?style=for-the-badge&logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Graph-Intelligence-0A66C2?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Micro--Governance-00C853?style=for-the-badge" />
-</p>
+Transforming static civic data into a **predictive, booth-level Living Knowledge Graph**.
 
-<p align="center">
-  <b>Transforming static civic data into predictive, booth-level intelligence.</b>
-</p>
+[Explore Backend Documentation](./backend/README.md) • [Explore Frontend Documentation](./frontend/README.md)
+
+</div>
 
 ---
 
 ## 🌟 Overview
 
-Civix AI is an AI-driven Civic Intelligence Platform that converts flat voter & complaint datasets into a **Living Knowledge Graph**.
+**Civix AI** is an advanced Civic Intelligence Platform engineered to modernize how local governments and civic leaders understand, predict, and respond to community needs. By aggregating flat datasets regarding voters and localized complaints, Civix AI constructs a highly interconnected **Knowledge Graph**. 
 
-Instead of reactive complaint management, Civix AI enables:
+Moving beyond traditional reactive complaint management, Civix AI empowers decision-makers with:
 
-✔ Booth-level Risk Prediction  
-✔ Structural Community Detection  
-✔ Civic Score Computation  
-✔ AI-based Recommendations  
-✔ Decision-Support Dashboard  
+- 🎯 **Booth-level Risk Prediction**: Anticipate issues before they escalate.
+- 🕸️ **Structural Community Detection**: Understand hidden relationships within civic data.
+- 🔢 **Civic Score Computation**: Evaluate community health using dynamically calculated scores.
+- 🤖 **AI-Based Recommendations**: Receive actionable, localized deployment strategies.
+- 📊 **Decision-Support Dashboard**: A modern, glassmorphic UI for real-time visualization.
 
 ---
 
 ## 🧠 Core Architecture
 
-```text
-Raw Data
-   ↓
-Data Cleaning & Validation
-   ↓
-Knowledge Graph (Neo4j)
-   ↓
-Graph Enrichment
-   ↓
-Graph Algorithms (Louvain, PageRank)
-   ↓
-Risk Prediction Model
-   ↓
-Civic Score Engine
-   ↓
-AI Recommendations
-   ↓
-Leader Dashboard
+The platform is designed to process, enrich, and visualize raw data at scale.
+
+```mermaid
+graph TD
+    A[Raw Tabular Data] -->|Data Cleaning & Validation| B(Knowledge Graph - Neo4j)
+    B -->|Graph Enrichment| C{Graph Algorithms}
+    C -->|Louvain, PageRank| D[Risk Prediction System]
+    D -->|Ollama LLM Output| E[AI Recommendations]
+    E --> F((Decision-Support Dashboard))
 ```
 
 ---
 
-## 🛠 Tech Stack
+## 🔬 AI & Data Pipeline
 
-### 🔹 Backend
+Our intelligence engine is powered by three main pillars:
 
-<p>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="40"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg" width="40"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/neo4j/neo4j-original.svg" width="40"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" width="40"/>
-</p>
+### 1. Graph Intelligence (Neo4j)
+- **Louvain Clustering**: Identifies structural community groups based on interaction data.
+- **PageRank Centrality**: Highlights the most significant nodes (hubs) in civic complaint chains.
+- **Cluster Density Detection**: Uncovers highly dense problem areas in real-time.
 
-- Python  
-- FastAPI  
-- Neo4j + Neo4j GDS  
-- Scikit-learn  
-- HuggingFace Transformers  
-- Ollama (LLM Integration)
+### 2. Predictive Risk Modeling
+- Evaluates booth-level risk scores based on complaint growth rates, resolution delays, and localized sentiment.
+- Dynamically assigns risk categories (e.g., Low, Medium, High).
 
----
-
-### 🔹 Frontend
-
-<p>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40"/>
-  <img src="https://img.icons8.com/?size=96&id=4PiNHtUJVbLs&format=png" width="40"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="40"/>
-</p>
-
-- React  
-- Tailwind CSS  
-- Recharts / Chart.js  
-
----
-
-## 🔬 AI Components
-
-### 🟢 Graph Intelligence
-- Louvain Clustering
-- PageRank Centrality
-- Cluster Density Detection
-
-### 🔵 Predictive Risk Model
-- Random Forest Classifier
-- Features:
-  - Complaint Growth Rate
-  - Resolution Delay
-  - Sentiment Score
-  - Cluster Density
-
-### 🟣 NLP Layer
-- Complaint Sentiment Analysis
-- Topic Classification
-
-### 🔴 Recommendation Engine
-Example:
-> Booth 23 → High Risk → Deploy Water Inspection Team  
-
----
-
-## 📊 Dashboard Preview
-
-<p align="center">
-  <img src="assets/dashboard-preview.gif" width="800"/>
-</p>
-
-*(Replace with actual demo GIF for maximum impact.)*
+### 3. NLP & Recommendations (Ollama)
+- Analyzes complaint sentiment and extracts core topics from unstructured text.
+- Provides actionable, natural-language insights directly to the dashboard (e.g., *"Booth 23 shows high risk of water infrastructure failure. Deploy inspection team immediately."*).
 
 ---
 
 ## 📂 Project Structure
 
-```text
-backend/
- ├── api/
- ├── core/
- ├── domain/
- ├── infrastructure/
- └── main.py
+This is a monorepo containing both the FastAPI graphical backend and the React frontend.
 
-frontend/
- ├── components/
- ├── pages/
- ├── charts/
- └── App.jsx
+```text
+civix_ai/
+ ├── backend/            # FastAPI, Neo4j connection, LLM integration
+ │   ├── app/            # Main application logic & endpoints
+ │   ├── requirements.txt
+ │   └── README.md       # Backend-specific instructions
+ │
+ ├── frontend/           # React + Vite application
+ │   ├── src/            # Components, pages, charts & network graphs
+ │   ├── package.json
+ │   └── README.md       # Frontend-specific instructions
+ │
+ └── README.md           # You are here
 ```
 
 ---
 
-## 🔐 Ethical Design
+## 🚀 Quick Start Guide
 
-- No personal voter profiling  
-- No political targeting  
-- Booth-level aggregated insights only  
-- Role-based access control  
+You can run the full application by spinning up both the backend and frontend servers independently.
 
-Civix AI is designed strictly for **governance optimization & civic transparency**.
-
----
-
-## 🚀 Getting Started
-
-### 🔹 Backend
+### Step 1: Backend Setup
+Make sure you have a running instance of Neo4j and Ollama.
 
 ```bash
 cd backend
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+
+# Run the API server
 uvicorn app.main:app --reload
 ```
+*For detailed environment setup, see the [Backend README](./backend/README.md).*
 
----
-
-### 🔹 Frontend
+### Step 2: Frontend Setup
 
 ```bash
 cd frontend
 npm install
+
+# Start the Vite development server
 npm run dev
 ```
+*For more frontend details, see the [Frontend README](./frontend/README.md).*
 
 ---
 
-## 📈 Why Civix AI?
+## 🔐 Ethical Design & Safety
 
-✔ Graph-native architecture  
-✔ Predictive governance intelligence  
-✔ Clean modular backend design  
-✔ Hackathon-ready, scalable system  
-✔ Production-style architecture  
+Civix AI strictly enforces data privacy and ethical AI usage:
+
+- 🛡️ **No Personal Profiling**: Data is anonymized and strictly aggregated at the booth or ward level.
+- 🛡️ **No Political Targeting**: The LLM prompts and Cypher generation are strictly scoped to prevent biased queries.
+- 🛡️ **Role-Based Access**: Designed for authorized civic administrators and planners.
 
 ---
 
 ## 🏆 Built For
-
-Smart India Hackathon  
-AI in Governance  
-Decision Support Systems  
-Civic Data Intelligence  
-
----
-
-## 📌 Vision
-
-To redefine governance through predictive, ethical, and booth-level AI intelligence.
-
----
+Designed to set a new standard in **AI in Governance**. A hackathon-ready, highly scalable architecture tailored for Smart Cities, Decision Support Systems, and Civic Intelligence.
