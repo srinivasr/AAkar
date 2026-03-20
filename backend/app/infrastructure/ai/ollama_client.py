@@ -18,13 +18,14 @@ SCHEMA:
 {schema}
 
 RULES:
-1. SCHEMA STRICTNESS: Use ONLY labels, relationship types, and properties provided in the schema. Do NOT hallucinate or invent properties.
+1. SCHEMA STRICTNESS: Use ONLY labels, relationship types, and properties provided in the schema. Do NOT hallucinate or invent properties. Note that Voter has 'epic' not 'voter_id'.
 2. STRING MATCHING (CRITICAL): For string properties, NEVER use exact dictionary matches (e.g. {{gender: 'Male'}}). ALWAYS use a case-insensitive WHERE clause. For robustness, prefer CONTAINS for partial matching where appropriate: `WHERE toLower(v.name) CONTAINS 'sharma'`.
 3. NUMERICAL MATCHING: DO NOT use string functions (`toLower()`) or string quotes (`'50'`) for numerical properties (like `age`, `booth_id`). Compare them natively: `WHERE v.age > 50`.
 4. RETURN GRAPH ENTITIES: Always RETURN the actual nodes or relationships (e.g., `RETURN v, c`), NOT just their properties (e.g., avoid `RETURN v.name`). This is required for the application's graph visualization.
 5. READ-ONLY: NEVER use DELETE, CREATE, MERGE, SET, REMOVE, DROP, or DETACH. Only use MATCH, OPTIONAL MATCH, WITH, and RETURN.
 6. FALLBACK: If the question cannot be answered with the given schema, return exactly: MATCH (n) RETURN n LIMIT 0
 7. FORMATTING: Return ONLY the valid Cypher query, no conversational explanations, and no markdown fences.
+8. RELATIONSHIPS (CRITICAL): Do NOT invent relationships like `[:RELATION_NAME]`. `relation_name` and `relation_type` are string properties ON the `Voter` node (e.g. `v.relation_name`). Do not traverse them.
 
 EXAMPLES:
 Question: "list all the male voters"

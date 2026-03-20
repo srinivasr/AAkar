@@ -32,7 +32,7 @@ const AskPanel = () => {
       const c = COLORS[n.group] || COLORS.Default;
       return {
         id: n.id,
-        label: n.properties?.name || n.properties?.voter_id?.toString() || n.properties?.booth_id?.toString() || n.properties?.complaint_id?.toString() || n.label,
+        label: n.properties?.name || n.properties?.epic?.toString() || n.properties?.booth_id?.toString() || n.properties?.complaint_id?.toString() || n.label,
         title: n.title,
         color: { background: c.bg, border: c.border, highlight: { background: c.bg, border: c.border } },
         font: { color: '#18181b', size: 13, face: 'Inter, sans-serif' },
