@@ -32,41 +32,44 @@ const Dashboard = ({ tab, setTab }) => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    if (tab === 'overview') {
+      fetchData(); 
+    }
+  }, [tab]);
 
   const badge = (level) => {
     const cls = level === 'High' ? 'badge-high' : level === 'Medium' ? 'badge-med' : 'badge-low';
     return <span className={`badge ${cls}`}>{level}</span>;
   };
 
-  /* ── Upload Tab ── */
-  if (tab === 'upload') return <UploadPanel />;
+  return (
+    <>
+      {/* ── Upload Tab ── */}
+      <div style={{ display: tab === 'upload' ? 'block' : 'none' }}>
+        <UploadPanel />
+      </div>
 
-  /* ── Ask AI Tab ── */
-  if (tab === 'ask') return <AskPanel />;
+      {/* ── Ask AI Tab ── */}
+      <div style={{ display: tab === 'ask' ? 'block' : 'none' }}>
+        <AskPanel />
+      </div>
 
-  /* ── Settings Tab ── */
-  if (tab === 'settings') {
-    return (
-      <div className="fade-in">
-        <div className="card" style={{ maxWidth: 520 }}>
-          <h3>Settings</h3>
-          <p style={{ fontSize: 14, color: 'var(--gray-500)', lineHeight: 1.6 }}>
-            Configuration options will appear here in future updates.
-          </p>
+      {/* ── Settings Tab ── */}
+      <div style={{ display: tab === 'settings' ? 'block' : 'none' }}>
+        <div className="fade-in">
+          <div className="card" style={{ maxWidth: 520 }}>
+            <h3>Settings</h3>
+            <p style={{ fontSize: 14, color: 'var(--gray-500)', lineHeight: 1.6 }}>
+              Configuration options will appear here in future updates.
+            </p>
+          </div>
         </div>
       </div>
-    );
-  }
 
-  /* ── Overview Tab ── */
-  const hasComplaints = overview?.total_complaints > 0;
-  const resolutionRate = hasComplaints 
-    ? ((1 - (overview.avg_open_ratio ?? 0)) * 100).toFixed(0) 
-    : '—';
-
-  return (
-    <div className="fade-in">
+      {/* ── Overview Tab ── */}
+      <div style={{ display: tab === 'overview' ? 'block' : 'none' }}>
+        <div className="fade-in">
       {/* ── Stat Cards ── */}
       <div className="stats-grid">
         <StatCard
@@ -272,7 +275,9 @@ const Dashboard = ({ tab, setTab }) => {
 
         </>
       )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
