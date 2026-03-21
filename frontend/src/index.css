@@ -28,18 +28,18 @@
   --gray-900: #18181b;
   --gray-950: #0a0a0a;
 
-  /* Accent */
-  --blue-50: #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-500: #3b82f6;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
+  /* Accent (Bharat Sentinel Deep Navy) */
+  --blue-50: #f0f4f8;
+  --blue-100: #d5e3fc;
+  --blue-500: #3a4665;
+  --blue-600: #1a2744;
+  --blue-700: #0d1b37;
 
   --red-50: #fef2f2;
   --red-100: #fecaca;
   --red-500: #ef4444;
-  --amber-50: #fffbeb;
-  --amber-500: #f59e0b;
+  --amber-50: #fcf6e8;
+  --amber-500: #D4A843;
   --green-50: #f0fdf4;
   --green-100: #bbf7d0;
   --green-500: #22c55e;
@@ -49,18 +49,18 @@
   /* Sidebar */
   --sidebar-width: 256px;
 
-  /* Radii — sharp, professional */
-  --radius-sm: 4px;
-  --radius: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
-  --radius-2xl: 4px;
+  /* Radii — strictly 0px per NIC style */
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.06), 0 4px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.08), 0 10px 10px rgba(0, 0, 0, 0.04);
+  /* Shadows — strictly NONE, use borders */
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 }
 
 body {
@@ -86,8 +86,8 @@ body {
 ═══════════════════════════════════════════ */
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--white);
-  border-right: 1px solid var(--gray-100);
+  background: var(--blue-600);
+  border-right: 1px solid var(--blue-700);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -113,33 +113,30 @@ body {
 }
 
 .sidebar-brand .logo {
-  width: 34px;
-  height: 34px;
-  background: var(--blue-600);
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--blue-600);
   font-weight: 900;
-  font-size: 14px;
-  letter-spacing: -0.5px;
+  font-size: 15px;
   flex-shrink: 0;
 }
 
 .sidebar-brand .brand-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
-  color: var(--blue-600);
-  letter-spacing: -0.5px;
+  color: var(--white);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-style: italic;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  padding: 0 12px;
   gap: 4px;
 }
 
@@ -147,11 +144,11 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
+  padding: 14px 24px;
+  border-left: 4px solid transparent;
   font-size: 11px;
   font-weight: 800;
-  color: var(--gray-300);
+  color: var(--blue-100);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
@@ -159,17 +156,18 @@ body {
   overflow: hidden;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  background: transparent;
 }
 
 .nav-item:hover {
-  background: var(--gray-50);
-  color: var(--gray-900);
+  background: var(--blue-700);
+  color: var(--white);
 }
 
 .nav-item.active {
-  background: var(--blue-600);
-  color: #fff;
-  box-shadow: var(--shadow-md);
+  background: var(--blue-700);
+  color: var(--white);
+  border-left-color: var(--amber-500);
 }
 
 .nav-item svg {
@@ -294,13 +292,11 @@ body {
 
 .stat-card {
   background: var(--white);
-  border: 1px solid var(--gray-100);
+  border: 1px solid var(--gray-200);
   border-radius: var(--radius-xl);
-  padding: 22px 20px;
+  padding: 24px 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -326,21 +322,19 @@ body {
 }
 
 .stat-card .label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
-  color: var(--gray-400);
+  color: var(--gray-500);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 4px;
-  line-height: 1;
+  letter-spacing: 0.05em;
 }
 
 .stat-card .value {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 900;
   color: var(--gray-900);
-  letter-spacing: -1px;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 /* ═══════════════════════════════════════════
@@ -348,18 +342,31 @@ body {
 ═══════════════════════════════════════════ */
 .card {
   background: var(--white);
-  border: 1px solid var(--gray-100);
+  border: 1px solid var(--gray-200);
   border-radius: var(--radius-xl);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+}
+
+.card-dark {
+  background: var(--blue-600);
+  border: 1px solid var(--blue-700);
+  color: var(--white);
 }
 
 .card h3 {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: var(--gray-900);
-  margin-bottom: 18px;
-  letter-spacing: -0.2px;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-dark h3 {
+  color: var(--white);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 /* ── 2-col grid ─── */
@@ -375,32 +382,34 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 14px 16px;
+  text-align: left;
 }
 
 th {
-  text-align: left;
-  padding: 10px 14px;
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--gray-400);
+  font-weight: 700;
+  color: var(--gray-500);
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border-bottom: 1px solid var(--gray-100);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--gray-200);
 }
 
 td {
-  padding: 13px 14px;
   font-size: 14px;
   color: var(--gray-700);
-  border-bottom: 1px solid var(--gray-50);
 }
 
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-tbody tr:hover td {
+tbody tr:nth-child(even) {
   background: var(--gray-50);
+}
+
+tbody tr:nth-child(odd) {
+  background: var(--white);
 }
 
 /* ── Risk Badges ─── */
@@ -550,20 +559,20 @@ tbody tr:hover td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .rec-booth {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--gray-900);
-  letter-spacing: -0.2px;
+  letter-spacing: -0.02em;
 }
 
 .rec-text {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--gray-600);
-  line-height: 1.55;
+  line-height: 1.6;
   font-weight: 500;
 }
 
@@ -640,7 +649,11 @@ tbody tr:hover td {
   align-items: center;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.summary-row.dark-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .summary-row:last-child {
@@ -650,11 +663,15 @@ tbody tr:hover td {
 .summary-label {
   font-size: 13px;
   color: var(--gray-600);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.summary-label.dark-label {
+  color: var(--blue-100);
 }
 
 .summary-value {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--gray-900);
 }

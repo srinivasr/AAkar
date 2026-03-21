@@ -43,6 +43,11 @@ const Dashboard = ({ tab, setTab }) => {
     return <span className={`badge ${cls}`}>{level}</span>;
   };
 
+  const hasComplaints = overview?.total_complaints > 0;
+  const resolutionRate = hasComplaints 
+    ? ((1 - (overview.avg_open_ratio ?? 0)) * 100).toFixed(0) 
+    : '—';
+
   return (
     <>
       {/* ── Upload Tab ── */}
@@ -72,56 +77,13 @@ const Dashboard = ({ tab, setTab }) => {
         <div className="fade-in">
           {/* ── Stat Cards ── */}
           <div className="stats-grid">
+            <StatCard label="TOTAL BOOTHS" value={overview?.total_booths ?? '—'} />
+            <StatCard label="TOTAL COMPLAINTS" value={overview?.total_complaints ?? '—'} />
+            <StatCard label="RESOLVED" value={overview?.total_resolved_complaints ?? '—'} />
             <StatCard
-              color="var(--blue-500)"
-              bgColor="var(--blue-50)"
-              label="Total Booths"
-              value={overview?.total_booths ?? '—'}
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              }
-            />
-            <StatCard
-              color="var(--amber-500)"
-              bgColor="var(--amber-50)"
-              label="Total Complaints"
-              value={overview?.total_complaints ?? '—'}
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              }
-            />
-            <StatCard
-              color="var(--green-500)"
-              bgColor="var(--green-50)"
-              label="Resolved"
-              value={overview?.total_resolved_complaints ?? '—'}
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-              }
-            />
-            <StatCard
-              color="var(--red-500)"
-              bgColor="var(--red-50)"
-              label="Open"
+              label="OPEN CASES"
               value={overview?.total_open_complaints ?? '—'}
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              }
+              valueStyle={{ color: 'var(--amber-500)' }}
             />
           </div>
 
@@ -202,29 +164,28 @@ const Dashboard = ({ tab, setTab }) => {
                     </div>
                   </div>
 
-                  {/* Quick Stats */}
-                  <div className="card" style={{ flex: 1 }}>
-                    <h3>Data Summary</h3>
+                  {/* Intelligence Stats */}
+                  <div className="card card-dark" style={{ flex: 1 }}>
+                    <h3 style={{ color: 'var(--white)', opacity: 0.9 }}>INTERNAL INTELLIGENCE</h3>
                     <div className="summary-stats">
-                      <div className="summary-row">
-                        <span className="summary-label">High-risk booths</span>
-                        <span className="summary-value badge badge-high">
-                          {booths.filter(b => b.risk_level === 'High').length}
+                      <div className="summary-row dark-row">
+                        <span className="summary-label dark-label">High-Risk Zones</span>
+                        <span className="summary-value" style={{ color: 'var(--amber-500)' }}>
+                          {String(booths.filter(b => b.risk_level === 'High').length).padStart(2, '0')}
                         </span>
                       </div>
-                      <div className="summary-row">
-                        <span className="summary-label">Medium-risk booths</span>
-                        <span className="summary-value badge badge-med">
-                          {booths.filter(b => b.risk_level === 'Medium').length}
+                      <div className="summary-row dark-row">
+                        <span className="summary-label dark-label">Medium-Risk Zones</span>
+                        <span className="summary-value" style={{ color: 'var(--blue-100)' }}>
+                          {String(booths.filter(b => b.risk_level === 'Medium').length).padStart(2, '0')}
                         </span>
                       </div>
-                      <div className="summary-row">
-                        <span className="summary-label">Active recommendations</span>
-                        <span className="summary-value badge" style={{ background: 'var(--gray-100)', color: 'var(--gray-800)' }}>
-                          {recommendations.length}
+                      <div className="summary-row dark-row">
+                        <span className="summary-label dark-label">AI Recommendations</span>
+                        <span className="summary-value" style={{ color: 'var(--amber-500)' }}>
+                          {String(recommendations.length).padStart(2, '0')}
                         </span>
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -282,15 +243,12 @@ const Dashboard = ({ tab, setTab }) => {
 };
 
 /* ── Stat Card Helper ── */
-function StatCard({ label, value, icon, bgColor }) {
+function StatCard({ label, value, valueStyle = {} }) {
   return (
     <div className="stat-card">
-      <div className="stat-icon" style={{ background: bgColor }}>
-        {icon}
-      </div>
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <p className="label">{label}</p>
-        <p className="value">{value}</p>
+        <p className="value" style={valueStyle}>{value}</p>
       </div>
     </div>
   );

@@ -57,43 +57,61 @@ const PAGE_TITLES = {
 
 function App() {
   const [tab, setTab] = useState('overview');
+  const [expanded, setExpanded] = useState(true);
 
   return (
     <div className="app">
       {/* ── Expanding Sidebar ── */}
-      <aside className="sidebar">
+      <div className={`sidebar ${expanded ? 'expanded' : ''}`}>
         <div className="sidebar-top">
+          {/* Brand */}
           <div className="sidebar-brand">
-            <div className="logo">C</div>
-            <span className="brand-name">Civix AI</span>
+            <div className="logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 18, height: 18 }}>
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span className="brand-name" style={{ letterSpacing: '1px' }}>CIVIX AI</span>
+              <span style={{ fontSize: 9, color: 'var(--blue-100)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>National Intelligence</span>
+            </div>
           </div>
+
+          {/* Navigation */}
           <nav className="sidebar-nav">
-            {NAV_ITEMS.map(item => (
+            {NAV_ITEMS.map((item) => (
               <div
                 key={item.id}
                 className={`nav-item ${tab === item.id ? 'active' : ''}`}
                 onClick={() => setTab(item.id)}
-                title={item.label}
               >
                 {item.icon}
-                {item.label}
+                <span>{item.label}</span>
               </div>
             ))}
           </nav>
         </div>
+
+        {/* Bottom Actions */}
         <div className="sidebar-bottom">
-          <nav className="sidebar-nav">
-            <div
-              className={`nav-item ${tab === 'settings' ? 'active' : ''}`}
-              onClick={() => setTab('settings')}
-              title="Settings"
-            >
-              {SETTINGS_ITEM.icon}
-              {SETTINGS_ITEM.label}
+          <div
+            className={`nav-item ${tab === SETTINGS_ITEM.id ? 'active' : ''}`}
+            onClick={() => setTab(SETTINGS_ITEM.id)}
+            style={{ marginBottom: 24 }}
+          >
+            {SETTINGS_ITEM.icon}
+            <span>{SETTINGS_ITEM.label}</span>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px', background: 'var(--blue-700)', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0 -12px' }}>
+            <div style={{ width: 8, height: 8, background: 'var(--amber-500)', borderRadius: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--white)', letterSpacing: '0.08em' }}>ADMIN_04</span>
+              <span style={{ fontSize: 8, color: 'var(--blue-100)', letterSpacing: '0.1em', opacity: 0.8 }}>AUTHORIZED ACCESS</span>
             </div>
-          </nav>
+          </div>
         </div>
-      </aside>
+      </div>
 
       {/* ── Main ── */}
       <div className="main">
