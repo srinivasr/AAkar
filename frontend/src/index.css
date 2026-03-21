@@ -475,6 +475,191 @@ tbody tr:hover td {
 }
 
 /* ═══════════════════════════════════════════
+   SECTION HEADER (Full-width cards)
+═══════════════════════════════════════════ */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.section-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.section-subtitle {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.section-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-100);
+}
+
+/* ═══════════════════════════════════════════
+   RECOMMENDATION GRID CARDS
+═══════════════════════════════════════════ */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.rec-card {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.rec-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.rec-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rec-booth {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gray-900);
+  letter-spacing: -0.2px;
+}
+
+.rec-text {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════
+   MESSAGE GRID CARDS
+═══════════════════════════════════════════ */
+.msg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.msg-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.msg-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.msg-card-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--blue-100);
+}
+
+.msg-card-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.msg-booth {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--blue-600);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.msg-text {
+  font-size: 14px;
+  color: var(--gray-700);
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════
+   DATA SUMMARY CARD
+═══════════════════════════════════════════ */
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-50);
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+
+/* ═══════════════════════════════════════════
    ASK PANEL
 ═══════════════════════════════════════════ */
 .ask-search {
