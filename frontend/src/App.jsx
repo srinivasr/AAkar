@@ -4,6 +4,17 @@ import './index.css';
 
 const NAV_ITEMS = [
   {
+    id: 'about',
+    label: 'About',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+    ),
+  },
+  {
     id: 'upload',
     label: 'Upload',
     icon: (
@@ -52,6 +63,7 @@ const PAGE_TITLES = {
   overview: 'Overview',
   ask: 'Ask AI',
   upload: 'Upload Data',
+  about: 'About System',
   settings: 'Settings',
 };
 

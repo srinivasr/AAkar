@@ -385,7 +385,8 @@ table {
   font-size: 13px;
 }
 
-th, td {
+th,
+td {
   padding: 14px 16px;
   text-align: left;
 }

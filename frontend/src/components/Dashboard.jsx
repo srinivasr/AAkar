@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AskPanel from './AskPanel';
 import UploadPanel from './UploadPanel';
+import AboutPanel from './AboutPanel';
 
 const API_BASE = 'http://localhost:8000/api/v1/admin';
 
@@ -70,6 +71,11 @@ const Dashboard = ({ tab, setTab }) => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* ── About Tab ── */}
+      <div style={{ display: tab === 'about' ? 'block' : 'none' }}>
+        <AboutPanel />
       </div>
 
       {/* ── Overview Tab ── */}
