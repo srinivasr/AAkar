@@ -18,8 +18,25 @@ const AskPanel = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const graphRef = useRef(null);
   const networkRef = useRef(null);
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
+  useEffect(() => {
+    // When fullscreen toggles, give a small delay for DOM to update then resize
+    const timer = setTimeout(() => {
+      if (networkRef.current) {
+        networkRef.current.setSize('100%', '100%');
+        networkRef.current.redraw();
+        networkRef.current.fit();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isFullScreen]);
 
   useEffect(() => {
     if (!result?.graph || !graphRef.current) return;
@@ -122,7 +139,7 @@ const AskPanel = () => {
   const columns = result?.data?.length ? Object.keys(result.data[0]) : [];
 
   return (
-    <div className="fade-in">
+    <div className={isFullScreen ? '' : 'fade-in'}>
       {/* ── Search Bar ── */}
       <div className="ask-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -188,7 +205,27 @@ const AskPanel = () => {
               </div>
 
               {result.graph?.nodes?.length > 0 ? (
-                <div className="graph-container" ref={graphRef} />
+                <div className={`graph-wrapper ${isFullScreen ? 'fullscreen' : ''}`}>
+                  <button 
+                    className="fullscreen-btn" 
+                    onClick={toggleFullScreen}
+                    title={isFullScreen ? "Minimize" : "Maximize"}
+                  >
+                    {isFullScreen ? (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
+                          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                        </svg>
+                        <span style={{ marginLeft: 6, fontWeight: 700, fontSize: 13 }}>Minimize View</span>
+                      </>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className="graph-container" ref={graphRef} />
+                </div>
               ) : (
                 <div className="card">
                   <div className="empty-state" style={{ height: 180 }}>
@@ -236,3 +273,4 @@ const AskPanel = () => {
 };
 
 export default AskPanel;
+
