@@ -10,7 +10,7 @@ sys.path.insert(0, str(backend_root))
 import pandas as pd
 from app.domain.services.graph_builder import process_voters, process_complaints
 
-UPLOADS_DIR = backend_root / "app" / "api" / "v1" / "uploads"
+UPLOADS_DIR = backend_root / "data" / "uploads"
 
 
 def seed():

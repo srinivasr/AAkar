@@ -1,24 +1,57 @@
-import pandas as pd
-from app.domain.services.graph_builder import process_voters, process_complaints
-import traceback
+"""Tests for graph_builder (voter / complaint processing)."""
+
+from unittest.mock import patch
 
 
-def test():
-    try:
-        print("Testing Voters Upload...")
-        df_voters = pd.read_csv("app/api/v1/uploads/voters.csv")
-        result_voters = process_voters(df_voters)
-        print("Voters result:", result_voters)
+@patch("app.domain.services.graph_builder.neo4j_client")
+def test_process_voters_returns_count(mock_client, sample_voters_df):
+    """process_voters should return the number of rows processed."""
+    mock_client.run_query.return_value = []
+    from app.domain.services.graph_builder import process_voters
 
-        print("\nTesting Complaints Upload...")
-        df_complaints = pd.read_csv("app/api/v1/uploads/complaints.csv")
-        result_complaints = process_complaints(df_complaints)
-        print("Complaints result:", result_complaints)
-
-    except Exception:
-        print("ERROR OCCURRED:")
-        traceback.print_exc()
+    result = process_voters(sample_voters_df)
+    assert result == {"voters_processed": 2}
+    assert mock_client.run_query.call_count == 2  # one per row
 
 
-if __name__ == "__main__":
-    test()
+@patch("app.domain.services.graph_builder.neo4j_client")
+def test_process_voters_query_params(mock_client, sample_voters_df):
+    """Verify that process_voters sends correct params to Neo4j."""
+    mock_client.run_query.return_value = []
+    from app.domain.services.graph_builder import process_voters
+
+    process_voters(sample_voters_df)
+
+    # Check first call's parameters
+    _, kwargs = mock_client.run_query.call_args_list[0]
+    params = kwargs.get("parameters") or mock_client.run_query.call_args_list[0][0][1]
+    assert params["epic"] == "ABC1234567"
+    assert params["name"] == "Test User One"
+    assert params["age"] == 30
+    assert params["gender"] == "Male"
+    assert params["booth_id"] == 1
+
+
+@patch("app.domain.services.graph_enrichment.neo4j_client")
+@patch("app.domain.services.voter_segmentation.neo4j_client")
+@patch("app.domain.services.recommendation_engine.neo4j_client")
+@patch("app.domain.services.risk_engine.neo4j_client")
+@patch("app.domain.services.graph_builder.neo4j_client")
+def test_process_complaints_returns_count(
+    mock_builder_client,
+    mock_risk_client,
+    mock_rec_client,
+    mock_seg_client,
+    mock_enrich_client,
+    sample_complaints_df,
+):
+    """process_complaints should return the number of rows processed."""
+    mock_builder_client.run_query.return_value = []
+    mock_risk_client.run_query.return_value = []
+    mock_rec_client.run_query.return_value = []
+    mock_seg_client.run_query.return_value = []
+    mock_enrich_client.run_query.return_value = []
+    from app.domain.services.graph_builder import process_complaints
+
+    result = process_complaints(sample_complaints_df)
+    assert result == {"complaints_processed": 2}

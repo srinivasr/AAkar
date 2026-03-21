@@ -96,6 +96,7 @@ def get_messages():
 
     return generate_booth_messages()
 
+
 @router.get("/analytics/network")
 def get_analytics_network():
     from app.domain.services.graph_analytics import get_network_analytics

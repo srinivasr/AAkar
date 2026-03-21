@@ -2,6 +2,7 @@ import networkx as nx
 import community.community_louvain as community_louvain
 from app.infrastructure.db.neo4j_client import neo4j_client
 
+
 def get_network_analytics():
     """
     Fetches the full entity graph from Neo4j, loads it into an in-memory 
@@ -32,7 +33,7 @@ def get_network_analytics():
 
     # 3. Build NetworkX Graphs
     DG = nx.DiGraph()  # Directed for PageRank
-    
+
     for row in nodes_result:
         DG.add_node(
             row["id"], 
@@ -54,11 +55,11 @@ def get_network_analytics():
     # 5. Compute Louvain Communities
     # Louvain strictly requires an undirected graph
     UG = DG.to_undirected()
-    
+
     # If graph is empty, return empty payload to prevent crashes
     if len(UG.nodes) == 0:
         return {"nodes": [], "links": []}
-        
+
     partition = community_louvain.best_partition(UG)
 
     # 6. Format Payload for react-force-graph
@@ -70,7 +71,7 @@ def get_network_analytics():
             "name": data["name"],
             "risk_level": data["risk_level"],
             "sentiment": data["sentiment"],
-            "val": pagerank_scores.get(n, 0) * 100, # Scale up for visual size mapping
+            "val": pagerank_scores.get(n, 0) * 100,  # Scale up for visual size mapping
             "community": partition.get(n, 0)
         })
 

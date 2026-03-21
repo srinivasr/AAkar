@@ -11,41 +11,59 @@ class OllamaClient:
 
     def generate_cypher(self, schema: str, question: str) -> str:
         """Prompt the LLM with graph schema + user question → read-only Cypher."""
-        prompt = f"""You are an elite Neo4j Cypher expert. Given the Neo4j graph database schema below, your task is to write a single READ-ONLY Cypher query that accurately and safely answers the user's question.
+        prompt = f"""[OBJECTIVE]
+Convert natural language into high-performance, READ-ONLY Neo4j Cypher.
 
-### DATABASE SCHEMA ###
+[CONTEXT]
+You are a Senior Neo4j Architect. You interpret user questions against a provided <schema> to produce executable code.
+
+<schema>
 {schema}
+</schema>
 
-### STRICT RULES FOR CYPHER GENERATION ###
-1. ONLY USE EXISTING ENTITIES: Use strictly the node labels, relationship types, and properties found in the schema above. NEVER hallucinate or invent new schema elements (e.g. use 'epic' for voters, not 'voter_id').
-2. CASE-INSENSITIVE STRING MATCHING: ALWAYS compare string properties gracefully by lowercasing them. Never use exact dictionaries like `{{gender: 'Male'}}`. ALWAYS use `WHERE toLower(v.name) CONTAINS 'sharma'` or `toLower(v.gender) = 'male'`.
-3. NUMERICAL COMPARISONS: Natively compare integers without string functions or quotes. Example: `WHERE v.age > 50`.
-4. NO DATA MUTATION (READ-ONLY): You are strictly forbidden from altering the graph. NEVER use CREATE, DELETE, SET, MERGE, REMOVE, DROP, or DETACH. Use only MATCH, WITH, OPTIONAL MATCH, and RETURN.
-5. GRAPH VISUALIZATION (RETURN ENTITIES): To render the UI graph correctly, ALWAYS explicitly RETURN the complete path or individual nodes and relationships. DO NOT return primitive properties like `RETURN v.name`. Example: Use `RETURN v, c` instead of `RETURN v.name, c.status`. If matching relationships, return them explicitly: `MATCH (v)-[r]->(b) RETURN v, r, b`.
-6. FAMILY RELATIONSHIPS ARE PROPERTIES: Do NOT confuse human "family relationships" with graph edges. If a user asks for "relationships of the voters" or "fathers", check the `relation_name` and `relation_type` properties on the `Voter` node directly. Do NOT write `MATCH (v)-[:FATHER]->(x)`. Use `MATCH (v:Voter) WHERE v.relation_type IS NOT NULL RETURN v`.
-7. DO NOT LIMIT RESULTS: NEVER use the `LIMIT` keyword in your query unless the user EXPLICITLY asks for a specific number of results (e.g., "top 5"). Always return the full dataset.
-8. FALLBACK RESPONSE: If the question cannot be answered with the given schema, output exactly: `MATCH (n) RETURN n LIMIT 0`.
-9. OUTPUT FORMATTING: Output ONLY the raw, executable Cypher query. No explanations, no markdown formatting, no code fences.
+[THOUGHT_PROCESS_STRICT]
+Before outputting Cypher, you must internally:
+1. IDENTIFY: Which nodes and relationships in the <schema> match the user's intent?
+2. CASE-INSENSITIVE: Always apply `toLower()` to string comparisons (e.g., `WHERE toLower(v.name) CONTAINS 'sharma'`).
+3. STRUCTURE: Ensure the RETURN statement includes the full path or entities (nodes/relationships) for UI rendering (e.g., `RETURN n, r, m`). NEVER return just properties.
+4. VALIDATE: Check for any mutating keywords (CREATE, MERGE, SET, DELETE). If found, remove them.
+5. FAMILY RELATIONSHIPS: "Family" is stored as string properties (`relation_name`, `relation_type`) on the Voter node. Do NOT invent a `[:FATHER]` edge.
+6. NO LIMITS: NEVER use the LIMIT keyword unless specifically asked. Return all results.
+7. FALLBACK: If the schema is insufficient, your only allowed output is the fallback query (`MATCH (n) RETURN n LIMIT 0`).
 
-### EXAMPLES ###
-Question: "List all the male voters"
-Cypher: MATCH (v:Voter) WHERE toLower(v.gender) = 'male' RETURN v
+[CONSTRAINTS]
+- NO markdown formatting (no ```cypher).
+- NO explanations or preamble outside the XML tags.
 
-Question: "List all the voters above the age of 50"
-Cypher: MATCH (v:Voter) WHERE v.age > 50 RETURN v
+[OUTPUT_FORMAT]
+You MUST output your response exactly in this XML format:
+<logic>
+Write a short 1-sentence explanation of your approach.
+</logic>
+<query>
+Write the executable Cypher query here.
+</query>
 
-Question: "Show me open complaints about water"
-Cypher: MATCH (v:Voter)-[r:REPORTED]->(c:Complaint) WHERE toLower(c.status) = 'open' AND toLower(c.issue_type) CONTAINS 'water' RETURN v, r, c
-
-Question: "Show me the family relationships of the voters"
-Cypher: MATCH (v:Voter) WHERE v.relation_type IS NOT NULL AND v.relation_name IS NOT NULL RETURN v
+[EXAMPLES]
+Question: "Show me all the male voters"
+<logic>
+I will find Voter nodes where the lowercase gender property equals 'male'.
+</logic>
+<query>
+MATCH (v:Voter) WHERE toLower(v.gender) = 'male' RETURN v
+</query>
 
 Question: "Show all the relationships"
-Cypher: MATCH (n)-[r]->(m) RETURN n, r, m
+<logic>
+I will match all nodes connected by any relationship and return the full paths.
+</logic>
+<query>
+MATCH (n)-[r]->(m) RETURN n, r, m
+</query>
 
 QUESTION: "{question}"
 
-CYPHER QUERY:"""
+OUTPUT:"""
 
         response = requests.post(
             f"{self.base_url}/api/generate",
@@ -58,15 +76,30 @@ CYPHER QUERY:"""
             timeout=120,
         )
         response.raise_for_status()
-        cypher = response.json().get("response", "").strip()
+        raw_text = response.json().get("response", "").strip()
 
-        # Strip markdown fences if the model wraps the output
-        if cypher.startswith("```"):
-            lines = cypher.split("\n")
-            lines = [line for line in lines if not line.startswith("```")]
-            cypher = "\n".join(lines).strip()
+        return self._clean_cypher(raw_text)
 
-        return cypher
+    def _clean_cypher(self, text: str) -> str:
+        """
+        Extracts the query from the Antigravity XML structure.
+        """
+        import re
+        # Find content between <query> tags
+        query_match = re.search(r'<query>(.*?)</query>', text, re.DOTALL)
+        if query_match:
+            query = query_match.group(1).strip()
+        else:
+            # Fallback if the LLM failed the tags but gave the query
+            query = text.replace("```cypher", "").replace("```", "").strip()
+
+        # Final safety check: No semi-colons, no mutations
+        query = query.split(';')[0].strip()
+        forbidden = ["CREATE", "MERGE", "DELETE", "SET", "REMOVE", "DROP", "DETACH"]
+        if any(cmd in query.upper() for cmd in forbidden):
+            return "MATCH (n) RETURN n LIMIT 0"
+
+        return query
 
     def summarize_results(self, question: str, cypher: str, results: list) -> str:
         """Prompt the LLM with question + Cypher + results → natural-language answer."""
