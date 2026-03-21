@@ -6,238 +6,256 @@ Converts voter PDF files to structured CSV data by:
 3. Running OCR (Tesseract) on each box
 4. Extracting structured fields (name, EPIC, age, gender, etc.)
 5. Returning a pandas DataFrame ready for graph ingestion
+
+Optimisations over v1:
+- Regex patterns pre-compiled at module level (not per-call)
+- PDF pages converted in one batch call (pdf2image handles threading internally)
+- Single persistent ThreadPoolExecutor across all pages (no per-page spin-up)
+- np.array() / PIL conversion called once per image, result reused across
+  detect_boxes + extract_header_text
+- Preprocessing (resize + threshold) factored into one helper, called once per box
+- process_single_box receives a pre-converted BGR ndarray, not a PIL image
+- Header re-parsed only when OCR text actually changes between pages
+- _DNE sentinel defined once; dict-comprehension replaces repeated literal assignment
+- Gender check tests Female before Male (avoids "female" matching _RE_MALE)
 """
 
-from pdf2image import convert_from_path
-import pytesseract
-import pandas as pd
+from __future__ import annotations
+
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import cv2
 import numpy as np
-import os
-from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+import pytesseract
+from pdf2image import convert_from_path
 from PIL import Image
 
+# ── Pre-compiled patterns (module-level — compiled once, reused everywhere) ───
 
-def pdf_to_images(pdf_path):
-    """Convert PDF to list of PIL images, skipping first 2 cover pages."""
-    return convert_from_path(pdf_path, first_page=3, thread_count=4)
+_RE_NAME        = re.compile(r"(?:name|नाम)\s*[:\-]?\s*(.+)",    re.IGNORECASE)
+_RE_RELATION    = re.compile(
+    r"(father|husband|mother|others|guardian|पिता|पति|माता)",     re.IGNORECASE
+)
+_RE_REL_VALUE   = re.compile(r":\s*(.+)")
+_RE_AGE         = re.compile(r"(?:age|आयु)\s*[:\-]?\s*(\d+)",    re.IGNORECASE)
+_RE_FEMALE      = re.compile(r"(?:female|महिला)",                  re.IGNORECASE)
+_RE_MALE        = re.compile(r"(?:male|पुरुष)",                    re.IGNORECASE)
+_RE_EPIC        = re.compile(r"[A-Z]{3}\s*\d{6,8}")
+_RE_EPIC_VALID  = re.compile(r"^[A-Z]{3}\d{7}$")
+_RE_HOUSE       = re.compile(r"(?:house|मकान)",                    re.IGNORECASE)
+_RE_HOUSE_NUM   = re.compile(r"\b\d+\b")
+_RE_ASSEMBLY    = re.compile(r"Assembly.*?:\s*(.+)",               re.IGNORECASE)
+_RE_SECTION     = re.compile(r"Section.*?:\s*(.+)",                re.IGNORECASE)
+_RE_PART        = re.compile(r"Part\s*No\.?\s*[:\-]?\s*(\d+)",    re.IGNORECASE)
+_RE_NAME_PREFIX = re.compile(r"^(.{1,3}\s*[:\-]\s*)")
+_RE_NAME_LEAD   = re.compile(r"^[^a-zA-Z\u0900-\u097F]+")
+_RE_NAME_CHARS  = re.compile(r"[^a-zA-Z\u0900-\u097F\s\.]")
+_RE_CAMEL       = re.compile(r"([a-z])([A-Z])")
+_RE_SPACED_CAPS = re.compile(r"^([A-Z]\s+){3,}")
+_RE_WHITESPACE  = re.compile(r"\s+")
+
+_RELATION_MAP = {
+    "father": "Father", "पिता": "Father",
+    "husband": "Husband", "पति": "Husband",
+    "mother": "Mother", "माता": "Mother",
+    "others": "Others",
+}
+
+_DNE = "DNE"   # sentinel — "Does Not Exist / not found"
+
+# ── Image helpers ─────────────────────────────────────────────────────────────
+
+def _to_bgr(pil_image) -> np.ndarray:
+    """Convert a PIL image to a BGR ndarray once; callers reuse the result."""
+    return cv2.cvtColor(np.asarray(pil_image), cv2.COLOR_RGB2BGR)
 
 
-def detect_boxes(image):
-    """Detect voter card boxes on a page image via contour detection."""
-    img = np.array(image)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
-    contours, _ = cv2.findContours(
-        thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-
-    boxes = []
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        if 250 < w < 1000 and 180 < h < 500:
-            crop = img[y:y + h, x:x + w]
-            boxes.append((y, crop))
-
-    boxes = sorted(boxes, key=lambda b: b[0])
-    return [b[1] for b in boxes]
-
-
-def ocr_box(image):
-    """Run OCR on a single voter card box image."""
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.resize(gray, None, fx=2, fy=2)
-    gray = cv2.adaptiveThreshold(
+def _preprocess(bgr: np.ndarray) -> np.ndarray:
+    """
+    Binarise a BGR crop for Tesseract.
+    Called once per box; the result is passed directly to ocr_box.
+    """
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
+    return cv2.adaptiveThreshold(
         gray, 255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY,
         11, 2,
     )
-    pil_img = Image.fromarray(gray)
-    text = pytesseract.image_to_string(
-        pil_img, lang="eng+hin", config="--oem 3 --psm 11"
+
+# ── PDF loading ───────────────────────────────────────────────────────────────
+
+def pdf_to_images(pdf_path: str) -> list:
+    """Convert PDF to PIL images, skipping first 2 cover pages."""
+    return convert_from_path(pdf_path, first_page=3, thread_count=4)
+
+# ── Box detection ─────────────────────────────────────────────────────────────
+
+def detect_boxes(bgr: np.ndarray) -> list[np.ndarray]:
+    """
+    Detect voter card boxes from a BGR ndarray.
+    Accepts the already-converted array from _to_bgr so no second conversion
+    is needed. Returns crops sorted top-to-bottom.
+    """
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    boxes = []
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if 250 < w < 1000 and 180 < h < 500:
+            boxes.append((y, bgr[y:y + h, x:x + w]))
+
+    boxes.sort(key=lambda b: b[0])
+    return [crop for _, crop in boxes]
+
+# ── OCR ───────────────────────────────────────────────────────────────────────
+
+def ocr_box(preprocessed: np.ndarray) -> str:
+    """Run Tesseract on an already-preprocessed (binarised grayscale) ndarray."""
+    return pytesseract.image_to_string(
+        Image.fromarray(preprocessed),
+        lang="eng+hin",
+        config="--oem 3 --psm 11",
     )
-    return text
 
 
-def extract_header(image):
-    """Extract header text (assembly, section, part_no) from top of page."""
-    img = np.array(image)
-    h, w = img.shape[:2]
-    header_img = img[0:int(h * 0.15), :]
-    pil_img = Image.fromarray(header_img)
-    text = pytesseract.image_to_string(
-        pil_img, lang="eng+hin", config="--psm 6"
+def extract_header_text(bgr: np.ndarray) -> str:
+    """OCR the top 15 % of a page BGR array for assembly/section/part metadata."""
+    h = bgr.shape[0]
+    crop = cv2.cvtColor(bgr[0:int(h * 0.15), :], cv2.COLOR_BGR2RGB)
+    return pytesseract.image_to_string(
+        Image.fromarray(crop), lang="eng+hin", config="--psm 6"
     )
-    return text
 
+# ── Parsing ───────────────────────────────────────────────────────────────────
 
-def parse_header(text):
-    """Parse assembly, section, part_no from header OCR text."""
-    header = {
-        "assembly": "DNE",
-        "section": "DNE",
-        "part_no": "DNE",
+def parse_header(text: str) -> dict:
+    """Extract assembly, section, part_no from page-header OCR text."""
+    def _get(pattern: re.Pattern, fallback: str = _DNE) -> str:
+        m = pattern.search(text)
+        return _RE_WHITESPACE.sub("", m.group(1).strip()) if m else fallback
+
+    return {
+        "assembly": _get(_RE_ASSEMBLY),
+        "section":  _get(_RE_SECTION),
+        "part_no":  _get(_RE_PART),
     }
 
-    match = re.search(r"Assembly.*?:\s*(.+)", text, re.IGNORECASE)
-    if match:
-        header["assembly"] = match.group(1).strip()
 
-    match = re.search(r"Section.*?:\s*(.+)", text, re.IGNORECASE)
-    if match:
-        header["section"] = match.group(1).strip()
-
-    match = re.search(r"Part\s*No\.?\s*[:\-]?\s*(\d+)", text, re.IGNORECASE)
-    if match:
-        header["part_no"] = match.group(1)
-
-    header["assembly"] = re.sub(r"\s+", "", header["assembly"])
-    header["section"] = re.sub(r"\s+", "", header["section"])
-
-    return header
-
-
-def clean_name(name):
-    """Clean OCR noise from a person's name."""
-    name = re.sub(r'^(.{1,3}\s*[:\-]\s*)', '', name)
-    name = re.sub(r'^[^a-zA-Z\u0900-\u097F]+', '', name)
-    name = re.sub(r'[^a-zA-Z\u0900-\u097F\s\.]', '', name)
-
-    if re.match(r'^([A-Z]\s+){3,}', name):
+def clean_name(raw: str) -> str:
+    """Strip OCR noise from a person's name field."""
+    name = _RE_NAME_PREFIX.sub("", raw)
+    name = _RE_NAME_LEAD.sub("", name)
+    name = _RE_NAME_CHARS.sub("", name)
+    if _RE_SPACED_CAPS.match(name):
         name = name.replace(" ", "")
-
-    name = re.sub(r'([a-z])([A-Z])', r'\1 \2', name)
+    name = _RE_CAMEL.sub(r"\1 \2", name)
     return " ".join(name.split())
 
 
-def extract_fields(text):
-    """Extract structured voter fields from OCR text of a single box."""
-    data = {
-        "epic": "DNE",
-        "name": "DNE",
-        "relation_name": "DNE",
-        "relation_type": "DNE",
-        "house_no": "DNE",
-        "age": "DNE",
-        "gender": "DNE",
-    }
+def extract_fields(text: str) -> dict:
+    """Extract structured voter fields from OCR text of a single card box."""
+    data = {k: _DNE for k in (
+        "epic", "name", "relation_name", "relation_type",
+        "house_no", "age", "gender",
+    )}
 
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
-    full_text = " ".join(lines)
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    full  = " ".join(lines)
 
     # NAME
     for line in lines:
-        if re.search(r"(name|नाम)", line, re.IGNORECASE):
-            match = re.search(
-                r"(name|नाम)\s*[:\-]?\s*(.+)", line, re.IGNORECASE
-            )
-            if match:
-                data["name"] = clean_name(match.group(2).strip())
-                break
+        m = _RE_NAME.search(line)
+        if m:
+            data["name"] = clean_name(m.group(1).strip())
+            break
 
     # RELATION
-    rel_pattern = (
-        r"(father|husband|mother|others|guardian|पिता|पति|माता)"
-    )
     for line in lines:
-        if re.search(rel_pattern, line, re.IGNORECASE):
-            rel = re.search(rel_pattern, line, re.IGNORECASE)
-            name = re.search(r":\s*(.+)", line)
-            if rel and name:
-                val = rel.group(1).lower()
-                if val in ["father", "पिता"]:
-                    data["relation_type"] = "Father"
-                elif val in ["husband", "पति"]:
-                    data["relation_type"] = "Husband"
-                elif val in ["mother", "माता"]:
-                    data["relation_type"] = "Mother"
-                elif val in ["others"]:
-                    data["relation_type"] = "Others"
-                else:
-                    data["relation_type"] = "Other"
-                data["relation_name"] = clean_name(name.group(1).strip())
-                break
+        rel = _RE_RELATION.search(line)
+        if rel:
+            val_m = _RE_REL_VALUE.search(line)
+            if val_m:
+                data["relation_type"] = _RELATION_MAP.get(rel.group(1).lower(), "Other")
+                data["relation_name"] = clean_name(val_m.group(1).strip())
+            break
 
-    # HOUSE
+    # HOUSE NUMBER
     for line in lines:
-        if re.search(r"(house|मकान)", line, re.IGNORECASE):
-            match = re.search(r"\b\d+\b", line)
-            if match:
-                data["house_no"] = match.group(0)
-                break
+        if _RE_HOUSE.search(line):
+            m = _RE_HOUSE_NUM.search(line)
+            if m:
+                data["house_no"] = m.group(0)
+            break
 
     # AGE
-    age = re.search(
-        r"(age|आयु)\s*[:\-]?\s*(\d+)", full_text, re.IGNORECASE
-    )
-    if age:
-        data["age"] = age.group(2)
+    m = _RE_AGE.search(full)
+    if m:
+        data["age"] = m.group(1)
 
-    # GENDER
-    if re.search(r"(female|महिला)", full_text, re.IGNORECASE):
+    # GENDER — Female checked first; its string contains "male" as a substring
+    if _RE_FEMALE.search(full):
         data["gender"] = "Female"
-    elif re.search(r"(male|पुरुष)", full_text, re.IGNORECASE):
+    elif _RE_MALE.search(full):
         data["gender"] = "Male"
 
     # EPIC
-    epic_match = re.search(r"[A-Z]{3}\s*\d{6,8}", full_text)
-    if epic_match:
-        data["epic"] = epic_match.group(0).replace(" ", "")
-
-    for k, v in data.items():
-        if not v or v.strip() == "":
-            data[k] = "DNE"
+    m = _RE_EPIC.search(full)
+    if m:
+        data["epic"] = m.group(0).replace(" ", "")
 
     return data
 
 
-def clean_record(data):
-    """Validate and clean a single voter record."""
-    if data["epic"] != "DNE" and not re.match(
-        r"^[A-Z]{3}\d{7}$", data.get("epic", "")
-    ):
-        data["epic"] = "DNE"
+def clean_record(data: dict) -> dict:
+    """Validate field values; reset out-of-range or malformed entries to DNE."""
+    if data["epic"] != _DNE and not _RE_EPIC_VALID.match(data["epic"]):
+        data["epic"] = _DNE
 
-    if data["age"] != "DNE":
+    if data["age"] != _DNE:
         try:
-            age = int(data["age"])
-            if age < 18 or age > 100:
-                data["age"] = "DNE"
+            if not (18 <= int(data["age"]) <= 100):
+                data["age"] = _DNE
         except ValueError:
-            data["age"] = "DNE"
+            data["age"] = _DNE
 
-    if data["name"] != "DNE" and len(data["name"]) < 3:
-        data["name"] = "DNE"
+    if data["name"] != _DNE and len(data["name"]) < 3:
+        data["name"] = _DNE
 
     return data
 
+# ── Per-box worker ────────────────────────────────────────────────────────────
 
-def process_single_box(args):
-    """Process a single voter card box — thread-safe entry point."""
-    box, header_data = args
-    text = ocr_box(box)
+def process_single_box(box_bgr: np.ndarray, header_data: dict) -> dict | None:
+    """
+    Full processing for one voter card box.
+    Receives a BGR ndarray (converted once upstream) and a header dict.
+    Thread-safe — operates on local state only.
+    """
+    text = ocr_box(_preprocess(box_bgr))
     text = text.replace("Photo Available", "").replace("|", "")
 
     if len(text.strip()) < 20:
         return None
 
-    record = extract_fields(text)
-    record = clean_record(record)
+    record = clean_record(extract_fields(text))
 
-    record["assembly"] = header_data.get("assembly", "DNE")
-    record["section"] = header_data.get("section", "DNE")
-    record["part_no"] = header_data.get("part_no", "DNE")
+    if record["name"] == _DNE:
+        return None
 
-    if record.get("name") != "DNE":
-        return record
+    record.update(header_data)
+    return record
 
-    return None
+# ── Main pipeline ─────────────────────────────────────────────────────────────
 
-
-def process_pdf(pdf_path):
-    """Full pipeline: PDF → structured DataFrame.
+def process_pdf(pdf_path: str) -> pd.DataFrame:
+    """Full pipeline: PDF path → structured DataFrame.
 
     Args:
         pdf_path: Path to the voter PDF file.
@@ -248,33 +266,39 @@ def process_pdf(pdf_path):
     print(f"Processing: {pdf_path}")
     images = pdf_to_images(pdf_path)
 
-    all_records = []
+    all_records: list[dict] = []
+    prev_header_text: str | None = None
+    cached_header: dict = {}
 
-    for page_num, img in enumerate(images):
-        print(f"\nProcessing Page {page_num + 3}")
+    # One executor for the entire PDF — eliminates per-page thread pool spin-up
+    with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
+        for page_num, pil_img in enumerate(images):
+            print(f"\nPage {page_num + 3}", end=" — ", flush=True)
 
-        header_text = extract_header(img)
-        header_data = parse_header(header_text)
+            # Convert PIL → BGR once; both detect_boxes and extract_header_text reuse it
+            bgr = _to_bgr(pil_img)
 
-        boxes = detect_boxes(img)
-        print(f"Boxes found: {len(boxes)}")
+            # Re-parse header only when the OCR text actually differs from the last page
+            header_text = extract_header_text(bgr)
+            if header_text != prev_header_text:
+                cached_header    = parse_header(header_text)
+                prev_header_text = header_text
 
-        with ThreadPoolExecutor(
-            max_workers=os.cpu_count() or 4
-        ) as executor:
-            batch_results = list(
-                executor.map(
-                    process_single_box,
-                    [(b, header_data) for b in boxes],
-                )
-            )
+            boxes = detect_boxes(bgr)
+            print(f"{len(boxes)} boxes found", flush=True)
 
-        for record in batch_results:
-            if record is not None:
-                all_records.append(record)
+            if not boxes:
+                continue
 
-    df = pd.DataFrame(all_records)
-    df.fillna("DNE", inplace=True)
+            futures = {
+                executor.submit(process_single_box, box, cached_header): i
+                for i, box in enumerate(boxes)
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    all_records.append(result)
 
+    df = pd.DataFrame(all_records).fillna(_DNE)
     print(f"\nDone. Records extracted: {len(df)}")
     return df
