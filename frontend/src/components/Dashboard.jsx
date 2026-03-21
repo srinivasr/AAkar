@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AskPanel from './AskPanel';
 import UploadPanel from './UploadPanel';
 import AboutPanel from './AboutPanel';
+import GraphAnalyticsPanel from './GraphAnalyticsPanel';
 
 const API_BASE = 'http://localhost:8000/api/v1/admin';
 
@@ -77,6 +78,13 @@ const Dashboard = ({ tab }) => {
       <div style={{ display: tab === 'about' ? 'block' : 'none' }}>
         <AboutPanel />
       </div>
+
+      {/* ── Intelligence Network Tab ── */}
+      {tab === 'intelligence' && (
+        <div style={{ display: 'block' }}>
+          <GraphAnalyticsPanel />
+        </div>
+      )}
 
       {/* ── Overview Tab ── */}
       <div style={{ display: tab === 'overview' ? 'block' : 'none' }}>

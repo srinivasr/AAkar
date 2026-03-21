@@ -95,3 +95,14 @@ def get_messages():
     from app.domain.services.message_generator import generate_booth_messages
 
     return generate_booth_messages()
+
+@router.get("/analytics/network")
+def get_analytics_network():
+    from app.domain.services.graph_analytics import get_network_analytics
+
+    try:
+        return get_network_analytics()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate network analytics: {str(e)}"
+        )
