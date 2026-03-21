@@ -69,7 +69,7 @@ const PAGE_TITLES = {
 
 function App() {
   const [tab, setTab] = useState('overview');
-  const [expanded, setExpanded] = useState(true);
+  const [expanded] = useState(true);
 
   return (
     <div className="app">

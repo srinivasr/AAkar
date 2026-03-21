@@ -5,7 +5,7 @@ import AboutPanel from './AboutPanel';
 
 const API_BASE = 'http://localhost:8000/api/v1/admin';
 
-const Dashboard = ({ tab, setTab }) => {
+const Dashboard = ({ tab }) => {
   const [overview, setOverview] = useState(null);
   const [booths, setBooths] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
