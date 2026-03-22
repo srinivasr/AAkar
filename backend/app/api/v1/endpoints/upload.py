@@ -1,6 +1,8 @@
 import io
 import tempfile
 from pathlib import Path
+from typing import List
+import os
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import pandas as pd
@@ -38,57 +40,69 @@ async def upload_csv(file: UploadFile = File(...), file_type: str = "voters"):
 
 
 @router.post("/pdf")
-async def upload_pdf(file: UploadFile = File(...)):
-    """Upload a voter PDF → convert to CSV via OCR → process into graph."""
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(
-            status_code=400, detail="Only PDF files are accepted."
-        )
+async def upload_pdf(files: List[UploadFile] = File(...)):
+    """Upload multiple voter PDFs → convert to CSV via OCR → process into graph."""
+    from app.domain.services.pdf_converter import process_pdf
+    
+    all_dfs = []
 
     try:
-        # Save uploaded PDF to a temp file
-        contents = await file.read()
-        with tempfile.NamedTemporaryFile(
-            suffix=".pdf", delete=False, mode="wb"
-        ) as tmp:
-            tmp.write(contents)
-            tmp_path = tmp.name
+        for file in files:
+            if not file.filename.lower().endswith(".pdf"):
+                continue
 
-        # Run the PDF → DataFrame pipeline
-        from app.domain.services.pdf_converter import process_pdf
+            contents = await file.read()
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf", delete=False, mode="wb"
+            ) as tmp:
+                tmp.write(contents)
+                tmp_path = tmp.name
 
-        df = process_pdf(tmp_path)
+            try:
+                df = process_pdf(tmp_path)
+                if not df.empty:
+                    all_dfs.append(df)
+            finally:
+                os.unlink(tmp_path)
 
-        # Clean up temp file
-        import os
-        os.unlink(tmp_path)
-
-        if df.empty:
+        if not all_dfs:
             return {
                 "status": "success",
                 "records_extracted": 0,
-                "message": "No voter records could be extracted from this PDF.",
+                "message": "No voter records could be extracted from the provided PDFs.",
             }
+
+        combined_df = pd.concat(all_dfs, ignore_index=True)
 
         # Save as voters.csv (triggers auto-update watcher too)
         csv_path = UPLOADS_DIR / "voters.csv"
-        df.to_csv(csv_path, index=False)
+        
+        if csv_path.exists():
+            existing_df = pd.read_csv(csv_path)
+            final_df = pd.concat([existing_df, combined_df], ignore_index=True)
+            # Optional deduplication to prevent double entries if re-uploaded
+            final_df = final_df.drop_duplicates(subset=["epic"], keep="last")
+        else:
+            final_df = combined_df
+            
+        final_df.to_csv(csv_path, index=False)
 
         # Process into graph immediately
-        result = process_voters(df)
+        result = process_voters(combined_df)
 
         return {
             "status": "success",
-            "records_extracted": len(df),
+            "records_extracted": len(combined_df),
             "processing_result": result,
             "message": (
-                f"Successfully extracted {len(df)} voter records "
-                f"from PDF and loaded into the database."
+                f"Successfully extracted {len(combined_df)} voter records "
+                f"from {len(files)} PDFs and loaded into the database."
             ),
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"PDF processing failed: {str(e)}",
+            detail=f"PDF batch processing failed: {str(e)}",
         )
+
