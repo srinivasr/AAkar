@@ -1,6 +1,6 @@
 <div align="center">
   
-# 🏛️ Civix AI
+# Civix AI
 **AI-Powered Booth Civic Intelligence Platform**
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -17,21 +17,21 @@ Transforming static civic data into a **predictive, booth-level Living Knowledge
 
 ---
 
-## 🌟 Overview
+## Overview
 
 **Civix AI** is an advanced Civic Intelligence Platform engineered to modernize how local governments and civic leaders understand, predict, and respond to community needs. By aggregating flat datasets regarding voters and localized complaints, Civix AI constructs a highly interconnected **Knowledge Graph**. 
 
 Moving beyond traditional reactive complaint management, Civix AI empowers decision-makers with:
 
-- 🎯 **Booth-level Risk Prediction**: Anticipate issues before they escalate.
-- 🕸️ **Structural Community Detection**: Understand hidden relationships within civic data.
-- 🔢 **Civic Score Computation**: Evaluate community health using dynamically calculated scores based on accurate, real-time node metrics.
-- 🤖 **AI-Based Recommendations**: Receive actionable, localized deployment strategies.
-- 📊 **Decision-Support Dashboard**: A modern, glassmorphic UI for real-time visualization and natural-language "Ask AI" queries.
+- **Booth-level Risk Prediction**: Anticipate issues before they escalate.
+- **Structural Community Detection**: Understand hidden relationships within civic data.
+- **Civic Score Computation**: Evaluate community health using dynamically calculated scores based on accurate, real-time node metrics.
+- **AI-Based Recommendations**: Receive actionable, localized deployment strategies.
+- **Decision-Support Dashboard**: A modern, glassmorphic UI for real-time visualization and natural-language "Ask AI" queries.
 
 ---
 
-## 🧠 Core Architecture
+## Core Architecture
 
 The platform is designed to process, enrich, and visualize raw data at scale.
 
@@ -46,7 +46,7 @@ graph TD
 
 ---
 
-## 🔬 AI & Data Pipeline
+## AI & Data Pipeline
 
 Our intelligence engine is powered by four main pillars:
 
@@ -70,7 +70,7 @@ Our intelligence engine is powered by four main pillars:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 This is a monorepo containing both the FastAPI graphical backend and the React frontend.
 
@@ -94,7 +94,7 @@ civix_ai/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 You can run the full application by spinning up both the backend and frontend servers independently.
 
@@ -125,15 +125,15 @@ npm run dev
 
 ---
 
-## 🔐 Ethical Design & Safety
+## Ethical Design & Safety
 
 Civix AI strictly enforces data privacy and ethical AI usage:
 
-- 🛡️ **No Personal Profiling**: Data is anonymized and strictly aggregated at the booth or ward level.
-- 🛡️ **No Mutating AI Queries**: The LLM prompt injection barriers are tightly scoped to completely block any commands that attempt to alter or destroy graph data.
-- 🛡️ **Role-Based Access**: Designed for authorized civic administrators and planners.
+- **No Personal Profiling**: Data is anonymized and strictly aggregated at the booth or ward level.
+- **No Mutating AI Queries**: The LLM prompt injection barriers are tightly scoped to completely block any commands that attempt to alter or destroy graph data.
+- **Role-Based Access**: Designed for authorized civic administrators and planners.
 
 ---
 
-## 🏆 Built For
+## Built For
 Designed to set a new standard in **AI in Governance**. A highly scalable architecture tailored for Smart Cities, Decision Support Systems, and Civic Intelligence.

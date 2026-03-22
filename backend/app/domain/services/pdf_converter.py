@@ -56,6 +56,9 @@ _RE_NAME_CHARS = re.compile(r"[^a-zA-Z\u0900-\u097F\s\.]")
 _RE_CAMEL = re.compile(r"([a-z])([A-Z])")
 _RE_SPACED_CAPS = re.compile(r"^([A-Z]\s+){3,}")
 _RE_WHITESPACE = re.compile(r"\s+")
+_RE_STATE_FIRST_PAGE = re.compile(r"S\d+\s+([A-Za-z]+)")
+_RE_AC_FIRST_PAGE = re.compile(r"Assembly Constituency.*?(\d+)", re.IGNORECASE)
+_RE_BOOTH_FIRST_PAGE = re.compile(r"Polling Station.*?(\d+)", re.IGNORECASE)
 
 _RELATION_MAP = {
     "father": "Father", "पिता": "Father",
@@ -151,6 +154,55 @@ def parse_header(text: str) -> dict:
         "section": _get(_RE_SECTION),
         "part_no": _get(_RE_PART),
     }
+
+
+def get_state_code(state: str) -> str:
+    """Map state name to two-letter code."""
+    state = state.lower()
+    if "mahar" in state: return "MH"
+    elif "uttar" in state: return "UP"
+    elif "bihar" in state: return "BR"
+    elif "gujarat" in state: return "GJ"
+    elif "rajasthan" in state: return "RJ"
+    elif "madhya" in state: return "MP"
+    elif "karnataka" in state: return "KA"
+    elif "tamil" in state: return "TN"
+    elif "bengal" in state: return "WB"
+    elif "delhi" in state: return "DL"
+    else: return "XX"
+
+
+def extract_first_page_data(bgr: np.ndarray) -> dict:
+    """Extract state, AC number, and booth number from the first page."""
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
+    
+    text = pytesseract.image_to_string(gray, lang="eng", config="--psm 6")
+    text = text.replace("\n", " ")
+    text = _RE_WHITESPACE.sub(" ", text)
+    
+    data = {"state": "", "ac_number": "", "booth_number": ""}
+    
+    m_state = _RE_STATE_FIRST_PAGE.search(text)
+    if m_state:
+        data["state"] = m_state.group(1)
+        
+    m_ac = _RE_AC_FIRST_PAGE.search(text)
+    if m_ac:
+        data["ac_number"] = m_ac.group(1)
+        
+    m_booth = _RE_BOOTH_FIRST_PAGE.search(text)
+    if m_booth:
+        data["booth_number"] = m_booth.group(1)
+        
+    return data
+
+
+def generate_booth_id(state: str, ac: str, booth: str) -> str:
+    """Generate a unique booth ID from state, AC, and booth number."""
+    state_code = get_state_code(state)
+    booth = booth.zfill(3) if booth else "000"
+    return f"{state_code}_{ac}_{booth}"
 
 
 def clean_name(raw: str) -> str:
@@ -271,11 +323,29 @@ def process_pdf(pdf_path: str) -> pd.DataFrame:
         pandas.DataFrame with columns matching voters.csv schema.
     """
     print(f"Processing: {pdf_path}")
+    
+    # Extract cover page data for booth ID
+    try:
+        cover_pages = convert_from_path(pdf_path, first_page=1, last_page=1, thread_count=1)
+        booth_id = _DNE
+        if cover_pages:
+            cover_bgr = _to_bgr(cover_pages[0])
+            first_page_data = extract_first_page_data(cover_bgr)
+            booth_id = generate_booth_id(
+                first_page_data["state"],
+                first_page_data["ac_number"],
+                first_page_data["booth_number"]
+            )
+            print(f"Booth ID: {booth_id}")
+    except Exception as e:
+        print(f"Failed to extract cover page: {e}")
+        booth_id = _DNE
+
     images = pdf_to_images(pdf_path)
 
     all_records: list[dict] = []
     prev_header_text: str | None = None
-    cached_header: dict = {}
+    cached_header: dict = {"booth_id": booth_id}
 
     # One executor for the entire PDF — eliminates per-page thread pool spin-up
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
@@ -289,6 +359,7 @@ def process_pdf(pdf_path: str) -> pd.DataFrame:
             header_text = extract_header_text(bgr)
             if header_text != prev_header_text:
                 cached_header = parse_header(header_text)
+                cached_header["booth_id"] = booth_id
                 prev_header_text = header_text
 
             boxes = detect_boxes(bgr)

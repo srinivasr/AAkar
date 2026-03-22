@@ -1,20 +1,20 @@
-# ⚙️ Civix AI - Backend
+# Civix AI - Backend
 
 The robust Python-based backend for **Civix AI**. It connects to a **Neo4j Knowledge Graph**, exposes RESTful APIs using **FastAPI**, processes PDF voter lists via highly-optimised **OCR pipelines**, and effortlessly translates natural language into secure Cypher queries using **Ollama**.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Framework**: FastAPI (Asynchronous, fast, and highly performant)
 - **Database**: Neo4j (Graph Database for profound relationship tracking)
-- **NLP/LLM**: Ollama (Locally hosted `llama3-text2cypher-demo`, 8b 4bit models supported)
+- **NLP/LLM**: Ollama (Locally hosted `tomasonjo/llama3-text2cypher-demo:8b_4bit`, 8b 4bit models supported)
 - **Data Extractor**: OpenCV, Tesseract OCR, pdf2image (for multi-threaded PDF ingest)
 - **Testing**: Pytest
 
 ---
 
-## 📂 Architecture
+## Architecture
 
 ```text
 backend/
@@ -34,7 +34,7 @@ backend/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Python 3.9+**
@@ -85,7 +85,7 @@ Note: The backend application contains an auto-update watcher that will instantl
 
 ---
 
-## 🧩 Key Functionalities
+## Key Functionalities
 
 - **Automated Data Ingestion**: Endpoints securely receive heavy PDF voter manifests, converting them to tabular CSV data using multi-threaded image preprocessing and dual-language OCR engines, automatically seeding the graph database.
 - **Live Graph Analytics**: Executes complex calculations against Neo4j to continuously update Booth Risk metrics and automatically resolve discrepancy matrices in complaint resolution statuses.

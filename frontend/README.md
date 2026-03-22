@@ -1,10 +1,10 @@
-# 🎨 Civix AI - Frontend
+# Civix AI - Frontend
 
 The presentation layer of **Civix AI**. Built with speed, reactivity, and a premium aesthetic in mind. It uses a modern glassmorphic design system and integrates interactive network structures to represent the Knowledge Graph natively in the browser.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Framework**: React 19 + Vite
 - **Styling**: Vanilla CSS (Dark Theme + Glassmorphism)
@@ -13,7 +13,7 @@ The presentation layer of **Civix AI**. Built with speed, reactivity, and a prem
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 frontend/
@@ -36,7 +36,7 @@ frontend/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Node.js** (v18.x or later)
@@ -65,7 +65,7 @@ The frontend will be instantly accessible, normally at: `http://localhost:5173`
 
 ---
 
-## 💠 Design Principles
+## Design Principles
 
 The UI of Civix AI is built around the concept of a **Living Dashboard**:
 - **Premium Aesthetics**: Deep, carefully curated custom dark palettes combined with vibrant, purposeful accent colors (e.g., Amber for high-risk zones, Blue for active connections).
@@ -75,7 +75,7 @@ The UI of Civix AI is built around the concept of a **Living Dashboard**:
 
 ---
 
-## 🔧 Scripts Available
+## Scripts Available
 
 - `npm run dev`: Starts the development server.
 - `npm run build`: Bundles the application for production.
