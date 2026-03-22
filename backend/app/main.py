@@ -13,22 +13,44 @@ from app.domain.services.seed_graph import seed
 
 async def auto_update_csv():
     voters_file = Path("data/uploads/voters.csv")
-    last_mtime = 0
+    complaints_file = Path("data/uploads/complaints.csv")
+    last_voter_mtime = 0
+    last_complaint_mtime = 0
+    
     if voters_file.exists():
-        last_mtime = os.stat(voters_file).st_mtime
+        last_voter_mtime = os.stat(voters_file).st_mtime
+    if complaints_file.exists():
+        last_complaint_mtime = os.stat(complaints_file).st_mtime
 
     while True:
         await asyncio.sleep(2)
+        
+        # Watch voters.csv
         if voters_file.exists():
-            current_mtime = os.stat(voters_file).st_mtime
-            if current_mtime > last_mtime:
+            v_mtime = os.stat(voters_file).st_mtime
+            if v_mtime > last_voter_mtime:
                 print("💥 Detected change in voters.csv! Auto-updating Neo4j database...")
-                last_mtime = current_mtime
+                last_voter_mtime = v_mtime
                 try:
                     seed()
-                    print("✅ Auto-update complete!")
+                    print("✅ Voters auto-update complete!")
                 except Exception as e:
-                    print(f"❌ Auto-update failed: {e}")
+                    print(f"❌ Voters auto-update failed: {e}")
+
+        # Watch complaints.csv
+        if complaints_file.exists():
+            c_mtime = os.stat(complaints_file).st_mtime
+            if c_mtime > last_complaint_mtime:
+                print("💥 Detected change in complaints.csv! Auto-syncing to Knowledge Graph...")
+                last_complaint_mtime = c_mtime
+                try:
+                    import pandas as pd
+                    from app.domain.services.graph_builder import process_complaints
+                    df = pd.read_csv(complaints_file)
+                    process_complaints(df)
+                    print("✅ Complaints auto-sync complete!")
+                except Exception as e:
+                    print(f"❌ Complaints auto-sync failed: {e}")
 
 
 @asynccontextmanager
