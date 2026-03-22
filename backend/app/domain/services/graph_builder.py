@@ -55,8 +55,7 @@ def process_complaints(df):
 
     for _, row in df.iterrows():
         query = """
-        MATCH (v:Voter {epic: $epic})
-        OPTIONAL MATCH (v)-[:LIVES_IN]->(h:House)-[:PART_OF]->(b:Booth)
+        MERGE (v:Voter {epic: $epic})
 
         MERGE (c:Complaint {complaint_id: $complaint_id})
         SET c.issue_type = $issue_type,

@@ -10,11 +10,13 @@ def get_admin_overview():
         # Aggregate all stats from booth metrics for consistency
         overview_query = """
         MATCH (b:Booth)
+        WITH count(b) AS total_booths
+        OPTIONAL MATCH (c:Complaint)
         RETURN
-            count(b) AS total_booths,
-            sum(coalesce(b.complaint_count, 0)) AS total_complaints,
-            sum(coalesce(b.open_count, 0)) AS total_open,
-            sum(coalesce(b.resolved_count, 0)) AS total_resolved
+            total_booths,
+            count(c) AS total_complaints,
+            sum(CASE WHEN c.status = 'Open' THEN 1 ELSE 0 END) AS total_open,
+            sum(CASE WHEN c.status = 'Resolved' THEN 1 ELSE 0 END) AS total_resolved
         """
         result = neo4j_client.run_query(overview_query)
         row = result[0] if result else {}
