@@ -49,7 +49,6 @@ _RE_HOUSE = re.compile(r"(?:house|मकान)", re.IGNORECASE)
 _RE_HOUSE_NUM = re.compile(r"\b\d+\b")
 _RE_ASSEMBLY = re.compile(r"Assembly.*?:\s*(.+)", re.IGNORECASE)
 _RE_SECTION = re.compile(r"Section.*?:\s*(.+)", re.IGNORECASE)
-_RE_PART = re.compile(r"Part\s*No\.?\s*[:\-]?\s*(\d+)", re.IGNORECASE)
 _RE_NAME_PREFIX = re.compile(r"^(.{1,3}\s*[:\-]\s*)")
 _RE_NAME_LEAD = re.compile(r"^[^a-zA-Z\u0900-\u097F]+")
 _RE_NAME_CHARS = re.compile(r"[^a-zA-Z\u0900-\u097F\s\.]")
@@ -144,7 +143,7 @@ def extract_header_text(bgr: np.ndarray) -> str:
 
 
 def parse_header(text: str) -> dict:
-    """Extract assembly, section, part_no from page-header OCR text."""
+    """Extract assembly and section from page-header OCR text."""
     def _get(pattern: re.Pattern, fallback: str = _DNE) -> str:
         m = pattern.search(text)
         return _RE_WHITESPACE.sub("", m.group(1).strip()) if m else fallback
@@ -152,7 +151,6 @@ def parse_header(text: str) -> dict:
     return {
         "assembly": _get(_RE_ASSEMBLY),
         "section": _get(_RE_SECTION),
-        "part_no": _get(_RE_PART),
     }
 
 

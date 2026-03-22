@@ -24,38 +24,20 @@ class Neo4jClient:
     def get_schema(self) -> str:
         """Fetch labels, relationship types, and property keys from Neo4j
         and return a human-readable schema string for the LLM prompt."""
-        with self.driver.session() as session:
-            labels = [
-                r["label"]
-                for r in session.run("CALL db.labels() YIELD label RETURN label")
-            ]
-            rel_types = [
-                r["relationshipType"]
-                for r in session.run(
-                    "CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType"
-                )
-            ]
-            prop_keys = [
-                r["propertyKey"]
-                for r in session.run(
-                    "CALL db.propertyKeys() YIELD propertyKey RETURN propertyKey"
-                )
-            ]
+        return """
+Nodes and their Properties:
+- Voter: epic, name, age, gender, relation_name, relation_type, assembly, section, category
+- House: house_no, booth_id
+- Booth: booth_id, risk_level, complaint_count, resolved_count, recommendation, open_count
+- Complaint: complaint_id, issue_type, timestamp, status
+- Issue: name
 
-        lines = [
-            "Node Labels: " + ", ".join(labels) if labels else "Node Labels: (none)",
-            (
-                "Relationship Types: " + ", ".join(rel_types)
-                if rel_types
-                else "Relationship Types: (none)"
-            ),
-            (
-                "Property Keys: " + ", ".join(prop_keys)
-                if prop_keys
-                else "Property Keys: (none)"
-            ),
-        ]
-        return "\n".join(lines)
+Relationships:
+- (Voter)-[:LIVES_IN]->(House)
+- (House)-[:PART_OF]->(Booth)
+- (Voter)-[:REPORTED]->(Complaint)
+- (Complaint)-[:BELONGS_TO]->(Issue)
+"""
 
     # ---- Raw record query (for graph extraction) ----
 

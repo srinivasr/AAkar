@@ -1,13 +1,24 @@
+import uuid
 from app.infrastructure.db.neo4j_client import neo4j_client
 from app.domain.services.graph_enrichment import update_booth_metrics
+
+
+def clear_database():
+    """Wipe the entire Neo4j database before a clean re-seed."""
+    query = "MATCH (n) DETACH DELETE n"
+    return neo4j_client.run_query(query)
 
 
 def process_voters(df):
     count = 0
     for _, row in df.iterrows():
+        epic_val = str(row["epic"]).strip()
+        if not epic_val or epic_val.upper() == "UNKNOWN" or epic_val.lower() == "nan":
+            epic_val = f"UNKNOWN_{uuid.uuid4().hex[:8]}"
+
         query = """
         MERGE (b:Booth {booth_id: $booth_id})
-        MERGE (h:House {house_no: $house_no})
+        MERGE (h:House {house_no: $house_no, booth_id: $booth_id})
         MERGE (v:Voter {epic: $epic})
         SET v.name = $name, 
             v.age = $age, 
@@ -22,7 +33,7 @@ def process_voters(df):
         neo4j_client.run_query(
             query,
             {
-                "epic": str(row["epic"]).strip(),
+                "epic": epic_val,
                 "name": str(row["name"]).strip(),
                 "age": int(row["age"]) if str(row["age"]).strip().isdigit() else -1,
                 "gender": str(row["gender"]).strip(),
@@ -31,7 +42,7 @@ def process_voters(df):
                 "house_no": str(row["house_no"]).strip(),
                 "assembly": str(row["assembly"]).strip(),
                 "section": str(row["section"]).strip(),
-                "booth_id": int(row["part_no"]) if str(row["part_no"]).strip().isdigit() else -1,
+                "booth_id": str(row["booth_id"]).strip(),
             },
         )
         count += 1

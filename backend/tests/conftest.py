@@ -18,7 +18,7 @@ def sample_voters_df():
             "house_no": ["101", "202"],
             "assembly": ["TestAssembly", "TestAssembly"],
             "section": ["SectionA", "SectionB"],
-            "part_no": [1, 2],
+            "booth_id": ["MH_123_001", "MH_123_002"],
         }
     )
 

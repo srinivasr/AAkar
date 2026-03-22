@@ -29,7 +29,7 @@ def test_process_voters_query_params(mock_client, sample_voters_df):
     assert params["name"] == "Test User One"
     assert params["age"] == 30
     assert params["gender"] == "Male"
-    assert params["booth_id"] == 1
+    assert params["booth_id"] == "MH_123_001"
 
 
 @patch("app.domain.services.graph_enrichment.neo4j_client")

@@ -56,6 +56,7 @@ const AskPanel = () => {
           label:
             n.properties?.name ||
             n.properties?.epic?.toString() ||
+            (n.properties?.house_no ? `House ${n.properties.house_no}` : null) ||
             n.properties?.booth_id?.toString() ||
             n.properties?.complaint_id?.toString() ||
             n.label,

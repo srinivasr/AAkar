@@ -8,12 +8,15 @@ backend_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
 import pandas as pd
-from app.domain.services.graph_builder import process_voters, process_complaints
+from app.domain.services.graph_builder import process_voters, process_complaints, clear_database
 
 UPLOADS_DIR = backend_root / "data" / "uploads"
 
 
 def seed():
+    print("🧹 Clearing existing data...")
+    clear_database()
+    
     voters_csv = UPLOADS_DIR / "voters.csv"
     complaints_csv = UPLOADS_DIR / "complaints.csv"
 
