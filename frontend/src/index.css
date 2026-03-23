@@ -170,10 +170,21 @@ body {
   border-left-color: var(--amber-500);
 }
 
-.nav-item svg {
+.nav-item svg,
+.nav-item img {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+
+.nav-item img {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.nav-item:hover img,
+.nav-item.active img {
+  opacity: 1;
 }
 
 .sidebar-bottom {
