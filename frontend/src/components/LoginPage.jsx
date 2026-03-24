@@ -19,9 +19,13 @@ export default function LoginPage({ onLogin }) {
     const slate300 = "#cbd5e1";
     const white = "#ffffff";
 
+    const [boothIdInput, setBoothIdInput] = useState('');
+    const [nameInput, setNameInput] = useState('');
+    const [passwordInput, setPasswordInput] = useState('');
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        onLogin(userType);
+        onLogin(userType, boothIdInput);
     };
 
     return (
@@ -169,13 +173,13 @@ export default function LoginPage({ onLogin }) {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {userType === 'booth' ? (
                                     <>
-                                        <FlatField label="Name of the Official" icon={<User size={16} />} placeholder="In-charge Full Name" />
-                                        <FlatField label="Booth ID" icon={<BadgeCheck size={16} />} placeholder="Enter unique Booth #" />
+                                        <FlatField label="Name of the Official" icon={<User size={16} />} placeholder="In-charge Full Name" value={nameInput} onChange={setNameInput} />
+                                        <FlatField label="Booth ID" icon={<BadgeCheck size={16} />} placeholder="Enter unique Booth #" value={boothIdInput} onChange={setBoothIdInput} />
                                         <FlatField label="State" icon={<Globe size={16} />} placeholder="Enter State / Union Territory" />
                                     </>
                                 ) : (
                                     <>
-                                        <FlatField label="Gov Official ID" icon={<ShieldCheck size={16} />} placeholder="GOV-XXXX-XXXX" />
+                                        <FlatField label="Gov Official ID" icon={<ShieldCheck size={16} />} placeholder="GOV-XXXX-XXXX" value={nameInput} onChange={setNameInput} />
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             <label style={{ fontSize: '9px', fontWeight: 900, color: slate400, textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: '4px' }}>Department</label>
                                             <select style={{ width: '100%', backgroundColor: slate50, border: `1px solid ${slate200}`, borderRadius: '12px', padding: '16px', fontSize: '12px', fontWeight: 700, outline: 'none' }}>
@@ -186,7 +190,7 @@ export default function LoginPage({ onLogin }) {
                                         </div>
                                     </>
                                 )}
-                                <FlatField label="Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" />
+                                <FlatField label="Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" value={passwordInput} onChange={setPasswordInput} />
                                 <FlatField label="Confirm Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" />
 
                                 <button type="submit" style={{
@@ -216,11 +220,14 @@ export default function LoginPage({ onLogin }) {
                         {view === 'login' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {userType === 'booth' ? (
-                                    <FlatField label="Official Name" icon={<User size={16} />} placeholder="Enter registered name" />
+                                    <>
+                                        <FlatField label="Official Name" icon={<User size={16} />} placeholder="Enter registered name" value={nameInput} onChange={setNameInput} />
+                                        <FlatField label="Booth ID" icon={<BadgeCheck size={16} />} placeholder="Enter unique Booth #" value={boothIdInput} onChange={setBoothIdInput} />
+                                    </>
                                 ) : (
-                                    <FlatField label="Gov Official ID" icon={<ShieldCheck size={16} />} placeholder="Enter ID" />
+                                    <FlatField label="Gov Official ID" icon={<ShieldCheck size={16} />} placeholder="Enter ID" value={nameInput} onChange={setNameInput} />
                                 )}
-                                <FlatField label="Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" />
+                                <FlatField label="Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" value={passwordInput} onChange={setPasswordInput} />
 
                                 <button type="submit" style={{
                                     width: '100%',
@@ -259,7 +266,7 @@ export default function LoginPage({ onLogin }) {
     );
 }
 
-function FlatField({ label, icon, placeholder, type = "text" }) {
+function FlatField({ label, icon, placeholder, type = "text", value, onChange }) {
     const slate200 = "#e2e8f0";
     const slate50 = "#f8fafc";
     const slate300 = "#cbd5e1";
@@ -272,6 +279,8 @@ function FlatField({ label, icon, placeholder, type = "text" }) {
                 <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: slate300 }}>{icon}</div>
                 <input
                     type={type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
                     style={{
                         width: '100%',
                         backgroundColor: slate50,
