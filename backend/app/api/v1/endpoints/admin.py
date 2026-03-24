@@ -2,32 +2,39 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
+import pandas as pd
 from app.infrastructure.db.neo4j_client import neo4j_client
 
 router = APIRouter()
+
+COMPLAINTS_CSV = Path("data/uploads/complaints.csv")
 
 
 @router.get("/overview")
 def get_admin_overview():
     try:
-        # Aggregate all stats from booth metrics for consistency
-        overview_query = """
-        MATCH (b:Booth)
-        WITH count(b) AS total_booths
-        OPTIONAL MATCH (i:Issue)
-        RETURN
-            total_booths,
-            count(i) AS total_complaints,
-            sum(CASE WHEN i.status = 'Open' THEN 1 ELSE 0 END) AS total_open,
-            sum(CASE WHEN i.status = 'Resolved' THEN 1 ELSE 0 END) AS total_resolved
-        """
-        result = neo4j_client.run_query(overview_query)
-        row = result[0] if result else {}
+        # ── Booth count from Neo4j ──
+        total_booths = 0
+        try:
+            booth_query = "MATCH (b:Booth) RETURN count(b) AS total_booths"
+            result = neo4j_client.run_query(booth_query)
+            total_booths = (result[0].get("total_booths") or 0) if result else 0
+        except Exception:
+            total_booths = 0
 
-        total_booths = row.get("total_booths") or 0
-        total_complaints = row.get("total_complaints") or 0
-        total_open = row.get("total_open") or 0
-        total_resolved = row.get("total_resolved") or 0
+        # ── Complaint stats from CSV (single source of truth) ──
+        total_complaints = 0
+        total_open = 0
+        total_resolved = 0
+
+        if COMPLAINTS_CSV.exists():
+            df = pd.read_csv(COMPLAINTS_CSV)
+            total_complaints = len(df)
+            status_col = "Status" if "Status" in df.columns else "status"
+            if status_col in df.columns:
+                total_open = int((df[status_col] == "Open").sum())
+                total_resolved = int((df[status_col] == "Resolved").sum())
 
         avg_open_ratio = 0
         if total_complaints > 0:

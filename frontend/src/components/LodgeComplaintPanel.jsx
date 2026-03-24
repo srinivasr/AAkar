@@ -44,7 +44,8 @@ const LodgeComplaintPanel = ({ boothId }) => {
           voter_epic: epic,
           phone_number: phone,
           issue_type: issueType,
-          description: description
+          description: description,
+          booth_id: boothId || ''
         }),
       });
 

@@ -37,6 +37,7 @@ class LodgeComplaintRequest(BaseModel):
     phone_number: str
     issue_type: str
     description: str
+    booth_id: str = ""
 
 
 class LegacyComplaintRequest(BaseModel):
@@ -88,7 +89,7 @@ async def lodge_complaint_sms(request: LodgeComplaintRequest):
         new_row = {
             "complaint_id": next_id,
             "timestamp": timestamp,
-            "booth_id": _get_booth_id_for_epic(request.voter_epic),
+            "booth_id": request.booth_id if request.booth_id else _get_booth_id_for_epic(request.voter_epic),
             "EPIC": request.voter_epic,
             "Contact_no": request.phone_number,
             "Issue_Type": request.issue_type,
