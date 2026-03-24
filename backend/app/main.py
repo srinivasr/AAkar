@@ -32,11 +32,15 @@ async def auto_update_csv():
             if v_mtime > last_voter_mtime:
                 print("💥 Detected change in voters.csv! Auto-updating Neo4j database...")
                 last_voter_mtime = v_mtime
-                try:
-                    seed()
-                    print("✅ Voters auto-update complete!")
-                except Exception as e:
-                    print(f"❌ Voters auto-update failed: {e}")
+                from app.api.v1.endpoints import upload
+                if not upload.API_UPLOAD_IN_PROGRESS:
+                    try:
+                        seed()
+                        print("✅ Voters auto-update complete!")
+                    except Exception as e:
+                        print(f"❌ Voters auto-update failed: {e}")
+                else:
+                    print("⏭️ Skipping voters auto-update; API upload in progress.")
 
         # Watch complaints.csv
         if complaints_file.exists():
@@ -44,14 +48,18 @@ async def auto_update_csv():
             if c_mtime > last_complaint_mtime:
                 print("💥 Detected change in complaints.csv! Auto-syncing to Knowledge Graph...")
                 last_complaint_mtime = c_mtime
-                try:
-                    import pandas as pd
-                    from app.domain.services.graph_builder import process_complaints
-                    df = pd.read_csv(complaints_file)
-                    process_complaints(df)
-                    print("✅ Complaints auto-sync complete!")
-                except Exception as e:
-                    print(f"❌ Complaints auto-sync failed: {e}")
+                from app.api.v1.endpoints import upload
+                if not upload.API_UPLOAD_IN_PROGRESS:
+                    try:
+                        import pandas as pd
+                        from app.domain.services.graph_builder import process_complaints
+                        df = pd.read_csv(complaints_file)
+                        process_complaints(df)
+                        print("✅ Complaints auto-sync complete!")
+                    except Exception as e:
+                        print(f"❌ Complaints auto-sync failed: {e}")
+                else:
+                    print("⏭️ Skipping complaints auto-sync; API upload in progress.")
 
 
 @asynccontextmanager

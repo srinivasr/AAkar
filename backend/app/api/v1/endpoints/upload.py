@@ -12,12 +12,16 @@ from app.domain.services.graph_builder import process_voters, process_complaints
 router = APIRouter()
 
 UPLOADS_DIR = Path(__file__).resolve().parents[4] / "data" / "uploads"
+API_UPLOAD_IN_PROGRESS = False
 
 
 @router.post("/")
 async def upload_csv(file: UploadFile = File(...), file_type: str = "voters"):
     """Upload a CSV file and process it into the graph."""
     try:
+        global API_UPLOAD_IN_PROGRESS
+        API_UPLOAD_IN_PROGRESS = True
+        
         contents = await file.read()
         df = pd.read_csv(io.BytesIO(contents))
 
@@ -37,6 +41,8 @@ async def upload_csv(file: UploadFile = File(...), file_type: str = "voters"):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        API_UPLOAD_IN_PROGRESS = False
 
 
 @router.post("/pdf")
@@ -47,6 +53,9 @@ async def upload_pdf(files: List[UploadFile] = File(...)):
     all_dfs = []
 
     try:
+        global API_UPLOAD_IN_PROGRESS
+        API_UPLOAD_IN_PROGRESS = True
+        
         for file in files:
             if not file.filename.lower().endswith(".pdf"):
                 continue
@@ -111,4 +120,6 @@ async def upload_pdf(files: List[UploadFile] = File(...)):
             status_code=500,
             detail=f"PDF batch processing failed: {str(e)}",
         )
+    finally:
+        API_UPLOAD_IN_PROGRESS = False
 

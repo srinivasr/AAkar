@@ -80,13 +80,9 @@ def process_complaints(df):
 
     for _, row in df.iterrows():
         query = """
-<<<<<<< HEAD
-        MERGE (v:Voter {epic: $epic})
-=======
         OPTIONAL MATCH (p:Person {epic_id: $epic})
         WITH p
         WHERE p IS NOT NULL
->>>>>>> 50bb645 (Changed the graph structure)
 
         MERGE (i:Issue {complaint_id: $complaint_id})
         SET i.type = $issue_type,
