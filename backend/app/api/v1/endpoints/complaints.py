@@ -34,7 +34,6 @@ CSV_COLUMNS = [
 
 # ── Request Models ──────────────────────────────────────────────────────────
 class LodgeComplaintRequest(BaseModel):
-    booth_id: str
     epic: str
     contact_no: str
     issue_type: str
@@ -86,10 +85,10 @@ async def lodge_complaint_sms(request: LodgeComplaintRequest):
         _ensure_csv_exists()
 
         # ── AUTHENTICATION: Ensure EPIC exists in central registry ──
-        if not _check_voter_exists(request.voter_epic):
+        if not _check_voter_exists(request.epic):
             raise HTTPException(
                 status_code=400, 
-                detail=f"AUTHORIZATION FAILED: EPIC ID '{request.voter_epic}' NOT FOUND IN SOVEREIGN REGISTRY."
+                detail=f"AUTHORIZATION FAILED: EPIC ID '{request.epic}' NOT FOUND IN SOVEREIGN REGISTRY."
             )
 
         existing_df = pd.read_csv(COMPLAINTS_CSV)
