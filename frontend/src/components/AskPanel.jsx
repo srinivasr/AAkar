@@ -18,12 +18,12 @@ const COLORS = {
 
 const getColor = (label) => {
   switch (label) {
-    case "Booth": return { background: "#1a2744", border: "#0d1b37", fontColor: "#ffffff" };
+    case "Booth": return { background: "#1a2744", border: "#0d1b37", fontColor: "#050505ff" };
     case "Area": return { background: "#D4A843", border: "#B8860B", fontColor: "#18181b" };
-    case "House": return { background: "#22c55e", border: "#16a34a", fontColor: "#ffffff" };
+    case "House": return { background: "#22c55e", border: "#16a34a", fontColor: "#150909ff" };
     case "Family": return { background: "#d4d4d8", border: "#a1a1aa", fontColor: "#18181b" };
     case "Person": return { background: "#f4f4f5", border: "#d4d4d8", fontColor: "#18181b" };
-    case "Issue": return { background: "#a855f7", border: "#9333ea", fontColor: "#ffffff" };
+    case "Issue": return { background: "#a855f7", border: "#9333ea", fontColor: "#070000ff" };
     default: return { background: "#71717a", border: "#52525b", fontColor: "#ffffff" };
   }
 };
@@ -40,6 +40,16 @@ const AskPanel = () => {
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullScreen]);
 
   useEffect(() => {
     // When fullscreen toggles, give a small delay for DOM to update then resize
@@ -74,8 +84,8 @@ const AskPanel = () => {
             n.properties?.name ||
             n.properties?.epic?.toString() ||
             (n.properties?.house_no ? `House ${n.properties.house_no}` : null) ||
-            n.properties?.booth_id?.toString() ||
             n.properties?.complaint_id?.toString() ||
+            n.properties?.booth_id?.toString() ||
             nodeType,
 
           color: {
@@ -229,7 +239,7 @@ const AskPanel = () => {
       {/* 🔥 QUICK ACCESS PANEL */}
       <div className="quick-panel-container" style={{ border: '1px solid var(--gray-200)', borderRadius: 0, padding: '16px', background: 'var(--gray-50)', marginBottom: 24 }}>
         <div className="quick-header" style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-500)', marginBottom: 16 }}>
-          ⚡ Authoritative Insights
+          Quick Insights
         </div>
 
         <div className="quick-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
