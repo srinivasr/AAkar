@@ -123,7 +123,7 @@ function App() {
   
   // Extract booth ID or official ID from email if role is booth
   // Format: booth_{BoothID}@innovateindia.gov or official_{GovID}@innovateindia.gov
-  const userIdFromEmail = currentUser?.email ? currentUser.email.split('@')[0].split('_')[1] : null;
+  const userIdFromEmail = currentUser?.email ? currentUser.email.split('@')[0].split('_').slice(1).join('_') : null;
 
   const [tab, setTab] = useState('overview');
   const boothId = userRole === 'booth' ? userIdFromEmail : null;
