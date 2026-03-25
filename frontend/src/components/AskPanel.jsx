@@ -232,8 +232,6 @@ physics: {
       { label: "Senior citizens", key: "SENIOR_VOTERS" },
       { label: "Youth voters", key: "YOUTH_VOTERS" },
       { label: "Voters by issue", key: "VOTERS_BY_ISSUE" },
-      { label: "Area relationships", key: "AREA_RELATIONS" },
-      { label: "Full network graph", key: "FULL_GRAPH" },
     ].map((q, i) => (
       <button
         key={i}
