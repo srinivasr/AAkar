@@ -44,7 +44,7 @@ backend/
 - **OCR System Dependencies**:  
   You must install Tesseract and Poppler on your host system to process PDF uploads natively:
   ```bash
-  sudo apt-get install tesseract-ocr tesseract-ocr-hin poppler-utils
+  sudo pacman -S tesseract-data-eng tesseract-data-hin poppler
   ```
 
 ### 2. Installation Setup

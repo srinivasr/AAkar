@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const API_BASE = 'http://localhost:8000/api/v1/admin';
 
@@ -6,6 +6,7 @@ const Schemes = () => {
     const [loading, setLoading] = useState(false);
     const [fetchingVoters, setFetchingVoters] = useState(false);
     const [voters, setVoters] = useState([]);
+    const [excludedNames, setExcludedNames] = useState([]);
     
     const [form, setForm] = useState({
         scheme_name: '',
@@ -24,13 +25,16 @@ const Schemes = () => {
     const white = "#ffffff";
     const gray400 = "#94a3b8";
     const gray600 = "#475569";
+    const red500 = "#ef4444";
 
     const fetchVoters = async (category) => {
         if (!category) {
             setVoters([]);
+            setExcludedNames([]);
             return;
         }
         setFetchingVoters(true);
+        setExcludedNames([]);
         try {
             const res = await fetch(`${API_BASE}/voters/filter?category=${encodeURIComponent(category)}`);
             const data = await res.json();
@@ -49,21 +53,34 @@ const Schemes = () => {
         fetchVoters(cat);
     };
 
+    const toggleExclusion = (name) => {
+        setExcludedNames(prev => 
+            prev.includes(name) 
+                ? prev.filter(n => n !== name) 
+                : [...prev, name]
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setFeedback(null);
         try {
+            const payload = {
+                ...form,
+                excluded_names: excludedNames
+            };
             const res = await fetch(`${API_BASE}/schemes/send_sms`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (res.ok) {
                 setFeedback({ type: 'success', text: `SCHEME BROADCASTED SUCCESSFULLY. ${data.message || ''}` });
                 setForm({ scheme_name: '', message: '', category: '' });
                 setVoters([]);
+                setExcludedNames([]);
             } else {
                 setFeedback({ type: 'error', text: data.detail || 'BROADCAST FAILED' });
             }
@@ -101,6 +118,7 @@ const Schemes = () => {
                                         style={{ padding: '16px', border: `1px solid ${surfaceDeep}`, backgroundColor: surface, fontSize: '13px', fontWeight: '700', color: navy, outline: 'none', cursor: 'pointer' }}
                                     >
                                         <option value="">Select Audience Segment</option>
+                                        <option value="All Voters">All Voters</option>
                                         <option value="Young Voters">Young Voters</option>
                                         <option value="Aged or old voters">Aged or old voters</option>
                                         <option value="Male Voters">Male Voters</option>
@@ -146,11 +164,12 @@ const Schemes = () => {
 
                             <button 
                                 type="submit" 
-                                disabled={loading}
+                                disabled={loading || (voters.length > 0 && excludedNames.length === voters.length)}
                                 style={{ 
-                                    backgroundColor: navy, color: white, padding: '20px', border: 'none', fontSize: '11px', fontWeight: '900', 
+                                    backgroundColor: (voters.length > 0 && excludedNames.length === voters.length) ? gray400 : navy, 
+                                    color: white, padding: '20px', border: 'none', fontSize: '11px', fontWeight: '900', 
                                     textTransform: 'uppercase', letterSpacing: '0.4em', cursor: loading ? 'not-allowed' : 'pointer',
-                                    borderBottom: `4px solid ${saffron}`
+                                    borderBottom: `4px solid ${(voters.length > 0 && excludedNames.length === voters.length) ? gray600 : saffron}`
                                 }}
                             >
                                 {loading ? 'BROADCASTING SMS...' : 'Broadcast Scheme SMS'}
@@ -161,19 +180,41 @@ const Schemes = () => {
                     {/* Sidebar Guidelines */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         <div style={{ backgroundColor: navyLight, padding: '32px', borderTop: `4px solid ${saffron}` }}>
-                            <h3 style={{ fontSize: '11px', fontWeight: '900', color: saffron, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '24px' }}>
-                                Matching Beneficiaries
-                            </h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h3 style={{ fontSize: '11px', fontWeight: '900', color: saffron, letterSpacing: '0.2em', textTransform: 'uppercase', margin: 0 }}>
+                                    Matching Beneficiaries
+                                </h3>
+                                <span style={{ color: white, fontSize: '10px', fontWeight: '700', backgroundColor: navy, padding: '4px 8px', borderRadius: '4px' }}>
+                                    {voters.length - excludedNames.length} / {voters.length}
+                                </span>
+                            </div>
                             {fetchingVoters ? (
                                 <div style={{ color: gray400, fontSize: '11px' }}>Scanning Registry...</div>
                             ) : (
                                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '400px', overflowY: 'auto' }}>
-                                    {voters.length > 0 ? voters.map((v, i) => (
-                                        <li key={i} style={{ display: 'flex', gap: '16px', color: '#cbd5e1', fontSize: '12px', lineHeight: '1.4', borderBottom: `1px solid rgba(255,255,255,0.05)`, paddingBottom: '8px' }}>
-                                            <span style={{ color: saffron, fontWeight: '900' }}>{String(i+1).padStart(2, '0')}</span>
-                                            {String(v.name).toUpperCase()}
+                                    {voters.length > 0 ? voters.map((v, i) => {
+                                        const isExcluded = excludedNames.includes(v.name);
+                                        return (
+                                        <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', color: isExcluded ? gray600 : '#cbd5e1', fontSize: '12px', lineHeight: '1.4', borderBottom: `1px solid rgba(255,255,255,0.05)`, paddingBottom: '8px', transition: 'all 0.2s' }}>
+                                            <div style={{ textDecoration: isExcluded ? 'line-through' : 'none' }}>
+                                                <span style={{ color: isExcluded ? gray600 : saffron, fontWeight: '900', marginRight: '8px' }}>{String(i+1).padStart(2, '0')}</span>
+                                                {String(v.name).toUpperCase()}
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => toggleExclusion(v.name)}
+                                                style={{ 
+                                                    background: isExcluded ? surfaceDeep : 'transparent', 
+                                                    border: `1px solid ${isExcluded ? gray400 : red500}`, 
+                                                    color: isExcluded ? gray600 : red500, 
+                                                    fontSize: '9px', fontWeight: '800', cursor: 'pointer', 
+                                                    padding: '4px 8px', borderRadius: '4px', letterSpacing: '0.05em' 
+                                                }}
+                                            >
+                                                {isExcluded ? 'INCLUDE' : 'EXCLUDE'}
+                                            </button>
                                         </li>
-                                    )) : (
+                                    )}) : (
                                         <li style={{ color: gray600, fontSize: '11px', fontStyle: 'italic' }}>
                                             No beneficiaries matched for this category.
                                         </li>

@@ -187,14 +187,17 @@ def filter_voters(category: str):
         if gender_col not in df.columns: df[gender_col] = ""
         if name_col not in df.columns: df[name_col] = "Unknown"
         
+        age_s = pd.to_numeric(df[age_col], errors='coerce')
         if category == "Young Voters":
-            filtered = df[pd.to_numeric(df[age_col], errors='coerce') > 20]
+            filtered = df[(age_s >= 18) & (age_s <= 35)]
         elif category == "Aged or old voters":
-            filtered = df[pd.to_numeric(df[age_col], errors='coerce') >= 60]
+            filtered = df[age_s >= 60]
         elif category == "Male Voters":
             filtered = df[df[gender_col].astype(str).str.upper().str.startswith("M", na=False)]
         elif category == "Female Voters":
             filtered = df[df[gender_col].astype(str).str.upper().str.startswith("F", na=False)]
+        elif category == "All Voters":
+            filtered = df
         else:
             filtered = pd.DataFrame()
             
@@ -203,10 +206,13 @@ def filter_voters(category: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from typing import Optional, List
+
 class SchemeSmsRequest(BaseModel):
     category: str
     scheme_name: str
     message: str
+    excluded_names: Optional[List[str]] = []
 
 @router.post("/schemes/send_sms")
 def send_scheme_sms(req: SchemeSmsRequest):
@@ -221,23 +227,33 @@ def send_scheme_sms(req: SchemeSmsRequest):
         
         age_col = cols.get("age", "Age")
         gender_col = cols.get("gender", "Gender")
-        phone_col = cols.get("numbers", cols.get("phone", cols.get("contact_no", "Numbers")))
+        phone_col = cols.get("numbers", cols.get("phone", cols.get("contact_no", "Contact_no")))
+        if phone_col not in df.columns and "Numbers" in df.columns:
+            phone_col = "Numbers"
         
         if age_col not in df.columns: df[age_col] = 0
         if gender_col not in df.columns: df[gender_col] = ""
         if phone_col not in df.columns: df[phone_col] = ""
         
+        age_s = pd.to_numeric(df[age_col], errors='coerce')
         if req.category == "Young Voters":
-            filtered = df[pd.to_numeric(df[age_col], errors='coerce') > 20]
+            filtered = df[(age_s >= 18) & (age_s <= 35)]
         elif req.category == "Aged or old voters":
-            filtered = df[pd.to_numeric(df[age_col], errors='coerce') >= 60]
+            filtered = df[age_s >= 60]
         elif req.category == "Male Voters":
             filtered = df[df[gender_col].astype(str).str.upper().str.startswith("M", na=False)]
         elif req.category == "Female Voters":
             filtered = df[df[gender_col].astype(str).str.upper().str.startswith("F", na=False)]
+        elif req.category == "All Voters":
+            filtered = df
         else:
             filtered = pd.DataFrame()
             
+        if req.excluded_names and not filtered.empty:
+            name_col = cols.get("name", "Name")
+            if name_col in filtered.columns:
+                filtered = filtered[~filtered[name_col].isin(req.excluded_names)]
+                
         phones = filtered[phone_col].dropna().tolist()
         
         success_count = 0
