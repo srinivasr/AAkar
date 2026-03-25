@@ -80,7 +80,7 @@ def process_complaints(df):
 
     for _, row in df.iterrows():
         query = """
-        OPTIONAL MATCH (p:Person {epic_id: $epic})
+        MATCH (p:Person {epic_id: $epic})
         WITH p
         WHERE p IS NOT NULL
         SET p.phone_number = $phone_number

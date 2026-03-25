@@ -13,6 +13,7 @@ from pathlib import Path
 
 from app.domain.services.graph_builder import process_complaints
 from app.infrastructure.sms_service import send_sms, notify_by_doc_id
+from app.infrastructure.db.neo4j_client import neo4j_client
 
 router = APIRouter()
 
@@ -82,6 +83,13 @@ async def lodge_complaint_sms(request: LodgeComplaintRequest):
     try:
         _ensure_csv_exists()
 
+        # ── AUTHENTICATION: Ensure EPIC exists in central registry ──
+        if not _check_voter_exists(request.voter_epic):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"AUTHORIZATION FAILED: EPIC ID '{request.voter_epic}' NOT FOUND IN SOVEREIGN REGISTRY."
+            )
+
         existing_df = pd.read_csv(COMPLAINTS_CSV)
         next_id = _next_complaint_id(existing_df)
         timestamp = datetime.now().isoformat()
@@ -138,6 +146,12 @@ async def lodge_complaint_legacy(request: LegacyComplaintRequest):
     """Original lodge-complaint endpoint preserved for existing clients."""
     try:
         _ensure_csv_exists()
+
+        if not _check_voter_exists(request.epic):
+            raise HTTPException(
+                status_code=400,
+                detail=f"LEGACY AUTH FAIL: EPIC '{request.epic}' NOT FOUND."
+            )
 
         existing_df = pd.read_csv(COMPLAINTS_CSV)
         next_id = _next_complaint_id(existing_df)
@@ -255,4 +269,15 @@ def _get_booth_id_for_epic(epic: str) -> str:
     except Exception as e:
         print(f"Error finding booth_id for EPIC {epic}: {e}")
     return "UNKNOWN"
+
+
+def _check_voter_exists(epic: str) -> bool:
+    """Verify if the EPIC exists in the Neo4j Person registry."""
+    try:
+        query = "MATCH (p:Person {epic_id: $epic}) RETURN count(p) > 0 AS exists"
+        result = neo4j_client.run_query(query, {"epic": epic})
+        return result[0].get("exists") if result else False
+    except Exception as e:
+        print(f"Graph check failed: {e}")
+        return False
 
