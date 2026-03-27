@@ -12,18 +12,114 @@ COMPLAINTS_CSV = Path("data/uploads/complaints.csv")
 VOTERS_CSV = Path("data/uploads/voters.csv")
 SCHEME_VOTERS_CSV = Path("data/uploads/fake_scheme_voters.csv")
 
+# ── Recommendation mapping (mirrors recommendation_engine.py) ──
+_ISSUE_RECOMMENDATIONS = {
+    "Water Supply": "Deploy water inspection team",
+    "Power Cut": "Contact electricity board",
+    "Road Repair": "Schedule road repair overview",
+    "Garbage Collection": "Deploy sanitation team",
+}
+
+
+def _compute_booth_stats() -> list[dict]:
+    """Build per-booth stats purely from CSVs."""
+    # Collect all known booth_ids from voters CSV
+    booth_ids: set[str] = set()
+    if VOTERS_CSV.exists():
+        try:
+            df_v = pd.read_csv(VOTERS_CSV)
+            col = "booth_id" if "booth_id" in df_v.columns else "Booth_id"
+            if col in df_v.columns:
+                booth_ids = set(df_v[col].dropna().astype(str).str.strip().unique())
+        except Exception:
+            pass
+
+    # Per-booth complaint aggregation
+    booth_map: dict[str, dict] = {}
+
+    if COMPLAINTS_CSV.exists():
+        try:
+            df_c = pd.read_csv(COMPLAINTS_CSV)
+            df_c.columns = df_c.columns.str.strip()
+
+            bid_col = next((c for c in df_c.columns if c.lower() == "booth_id"), None)
+            status_col = next((c for c in df_c.columns if c.lower() == "status"), None)
+            issue_col = next(
+                (c for c in df_c.columns if c.lower() in ("issue_type", "issue")), None
+            )
+
+            if bid_col:
+                for bid in df_c[bid_col].dropna().astype(str).str.strip().unique():
+                    booth_ids.add(bid)
+
+                for bid, grp in df_c.groupby(df_c[bid_col].astype(str).str.strip()):
+                    total = len(grp)
+                    open_n = 0
+                    resolved_n = 0
+                    if status_col:
+                        s = grp[status_col].astype(str).str.strip()
+                        open_n = int((s == "Open").sum())
+                        resolved_n = int((s == "Resolved").sum())
+
+                    # Most frequent issue type for recommendation
+                    prevalent_issue = None
+                    if issue_col:
+                        issue_counts = (
+                            grp[issue_col]
+                            .astype(str)
+                            .str.strip()
+                            .value_counts()
+                        )
+                        if not issue_counts.empty:
+                            prevalent_issue = issue_counts.index[0]
+
+                    open_ratio = open_n / total if total > 0 else 0.0
+                    risk_level = (
+                        "High" if open_ratio > 0.7
+                        else "Medium" if open_ratio > 0.4
+                        else "Low"
+                    )
+
+                    if prevalent_issue and prevalent_issue in _ISSUE_RECOMMENDATIONS:
+                        recommendation = _ISSUE_RECOMMENDATIONS[prevalent_issue]
+                    elif open_n > 10:
+                        recommendation = "Deploy general grievance team"
+                    elif total > 0:
+                        recommendation = "Monitor situation"
+                    else:
+                        recommendation = "No action required"
+
+                    booth_map[str(bid)] = {
+                        "booth_id": str(bid),
+                        "complaint_count": total,
+                        "open_count": open_n,
+                        "resolved_count": resolved_n,
+                        "risk_level": risk_level,
+                        "recommendation": recommendation,
+                    }
+        except Exception:
+            pass
+
+    # Booths from voters CSV that had zero complaints
+    for bid in booth_ids:
+        if bid not in booth_map:
+            booth_map[bid] = {
+                "booth_id": bid,
+                "complaint_count": 0,
+                "open_count": 0,
+                "resolved_count": 0,
+                "risk_level": "Low",
+                "recommendation": "No action required",
+            }
+
+    return sorted(booth_map.values(), key=lambda b: b["booth_id"])
+
 
 @router.get("/overview")
 def get_admin_overview():
     try:
-        # ── Booth count from Neo4j ──
-        total_booths = 0
-        try:
-            booth_query = "MATCH (b:Booth) RETURN count(b) AS total_booths"
-            result = neo4j_client.run_query(booth_query)
-            total_booths = (result[0].get("total_booths") or 0) if result else 0
-        except Exception:
-            total_booths = 0
+        booths = _compute_booth_stats()
+        total_booths = len(booths)
 
         # ── Complaint stats from CSV (single source of truth) ──
         total_complaints = 0
@@ -67,32 +163,21 @@ def get_admin_overview():
 
 @router.get("/booths")
 def get_booths():
-    query = """
-    MATCH (b:Booth)
-    RETURN 
-        b.booth_id AS booth_id,
-        coalesce(b.complaint_count, 0) AS complaint_count,
-        coalesce(b.open_count, 0) AS open_count,
-        coalesce(b.resolved_count, 0) AS resolved_count,
-        coalesce(b.risk_level, "Low") AS risk_level,
-        coalesce(b.recommendation, "No action required") AS recommendation
-    ORDER BY b.booth_id
-    """
-    return neo4j_client.run_query(query)
+    return _compute_booth_stats()
 
 
 @router.get("/recommendations")
 def get_recommendations():
-    query = """
-    MATCH (b:Booth)
-    WHERE b.recommendation IS NOT NULL AND b.recommendation <> "No action required"
-    RETURN
-        b.booth_id AS booth_id,
-        b.recommendation AS recommendation,
-        coalesce(b.risk_level, "Low") AS risk_level
-    ORDER BY b.booth_id
-    """
-    return neo4j_client.run_query(query)
+    booths = _compute_booth_stats()
+    return [
+        {
+            "booth_id": b["booth_id"],
+            "recommendation": b["recommendation"],
+            "risk_level": b["risk_level"],
+        }
+        for b in booths
+        if b["recommendation"] != "No action required"
+    ]
 
 
 @router.get("/messages")

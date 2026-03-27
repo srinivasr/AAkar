@@ -1,20 +1,17 @@
 """Tests for the authentication endpoints (register, login, /me)."""
 
+import uuid
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 import os
 
-# Force a test-only database to avoid polluting production data
+# Force a test-only JWT secret
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-tests-only!!"
 
 
-def _get_client():
-    """Create a TestClient with DB tables initialised."""
-    from app.domain.models.user import User  # noqa: F401 — register table
-    from app.infrastructure.db.sqlite_client import init_db
-    init_db()
-    from app.main import app
-    return TestClient(app)
+def _make_email(prefix: str) -> str:
+    """Return a unique email to avoid conflicts with existing DB entries."""
+    return f"{prefix}_{uuid.uuid4().hex[:8]}@innovateindia.gov"
 
 
 @patch("app.domain.services.seed_graph.seed")
@@ -22,11 +19,14 @@ def _get_client():
 def test_register_and_login(mock_gdb, mock_seed):
     """Register a new user, then login with same credentials."""
     mock_gdb.driver.return_value = MagicMock()
-    client = _get_client()
+
+    from app.main import app
+    email = _make_email("booth")
+    client = TestClient(app)
 
     # ── Register ──
     res = client.post("/api/v1/auth/register", json={
-        "email": "test_booth_001@innovateindia.gov",
+        "email": email,
         "password": "securepass123",
         "role": "booth",
         "display_name": "Test Booth"
@@ -35,25 +35,22 @@ def test_register_and_login(mock_gdb, mock_seed):
     data = res.json()
     assert "access_token" in data
     assert data["user"]["role"] == "booth"
-    assert data["user"]["email"] == "test_booth_001@innovateindia.gov"
+    assert data["user"]["email"] == email
     token = data["access_token"]
 
     # ── Login ──
     res = client.post("/api/v1/auth/login", json={
-        "email": "test_booth_001@innovateindia.gov",
+        "email": email,
         "password": "securepass123"
     })
     assert res.status_code == 200, res.text
-    data = res.json()
-    assert "access_token" in data
+    assert "access_token" in res.json()
 
     # ── /me ──
-    res = client.get("/api/v1/auth/me", headers={
-        "Authorization": f"Bearer {token}"
-    })
+    res = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200, res.text
     me = res.json()
-    assert me["email"] == "test_booth_001@innovateindia.gov"
+    assert me["email"] == email
     assert me["role"] == "booth"
 
 
@@ -62,7 +59,9 @@ def test_register_and_login(mock_gdb, mock_seed):
 def test_login_invalid_credentials(mock_gdb, mock_seed):
     """Login with wrong password should return 401."""
     mock_gdb.driver.return_value = MagicMock()
-    client = _get_client()
+
+    from app.main import app
+    client = TestClient(app)
 
     res = client.post("/api/v1/auth/login", json={
         "email": "nonexistent@innovateindia.gov",
@@ -77,13 +76,12 @@ def test_login_invalid_credentials(mock_gdb, mock_seed):
 def test_register_duplicate_email(mock_gdb, mock_seed):
     """Registering with an existing email should return 409."""
     mock_gdb.driver.return_value = MagicMock()
-    client = _get_client()
 
-    payload = {
-        "email": "duplicate_test@innovateindia.gov",
-        "password": "securepass123",
-        "role": "official"
-    }
+    from app.main import app
+    client = TestClient(app)
+    email = _make_email("dup")
+
+    payload = {"email": email, "password": "securepass123", "role": "official"}
 
     # First registration should succeed
     res = client.post("/api/v1/auth/register", json=payload)
@@ -100,7 +98,9 @@ def test_register_duplicate_email(mock_gdb, mock_seed):
 def test_me_without_token(mock_gdb, mock_seed):
     """/me without token should return 401."""
     mock_gdb.driver.return_value = MagicMock()
-    client = _get_client()
+
+    from app.main import app
+    client = TestClient(app)
 
     res = client.get("/api/v1/auth/me")
     assert res.status_code == 401
