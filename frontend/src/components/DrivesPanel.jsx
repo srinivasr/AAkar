@@ -79,7 +79,7 @@ const DrivesPanel = () => {
     return (
         <div style={{ padding: '40px', backgroundColor: surface, minHeight: '100%', fontFamily: '"Public Sans", "Inter", sans-serif' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px' }}>
                     {/* Main Form Section */}
                     <div style={{ backgroundColor: white, border: `1px solid ${surfaceDeep}`, padding: '48px', position: 'relative' }}>
@@ -88,18 +88,18 @@ const DrivesPanel = () => {
                                 Strategic Deployment
                             </h2>
                             <h1 style={{ fontSize: '24px', fontWeight: '900', color: navy, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-                                Schedule New Drive / Function
+                                Schedule New Event
                             </h1>
                         </header>
 
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Mission Title</label>
-                                    <input 
+                                    <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Event Title</label>
+                                    <input
                                         type="text"
                                         value={form.title}
-                                        onChange={e => setForm({...form, title: e.target.value})}
+                                        onChange={e => setForm({ ...form, title: e.target.value })}
                                         required
                                         placeholder="e.g. Vaccination Drive Phase II"
                                         style={{ padding: '16px', border: `1px solid ${surfaceDeep}`, backgroundColor: surface, fontSize: '13px', fontWeight: '700', color: navy, outline: 'none' }}
@@ -107,9 +107,9 @@ const DrivesPanel = () => {
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Target Jurisdiction (Booth)</label>
-                                    <select 
-                                        value={form.booth_id} 
-                                        onChange={(e) => setForm({...form, booth_id: e.target.value})}
+                                    <select
+                                        value={form.booth_id}
+                                        onChange={(e) => setForm({ ...form, booth_id: e.target.value })}
                                         required
                                         style={{ padding: '16px', border: `1px solid ${surfaceDeep}`, backgroundColor: surface, fontSize: '13px', fontWeight: '700', color: navy, outline: 'none', cursor: 'pointer' }}
                                     >
@@ -123,13 +123,13 @@ const DrivesPanel = () => {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operation Type</label>
+                                    <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Event Type</label>
                                     <div style={{ display: 'flex', border: `1px solid ${surfaceDeep}`, backgroundColor: surface, padding: '4px' }}>
-                                        {['Drive', 'Function', 'Security'].map(type => (
-                                            <button 
+                                        {['Health', 'Education', 'Welfare'].map(type => (
+                                            <button
                                                 key={type}
                                                 type="button"
-                                                onClick={() => setForm({...form, type})}
+                                                onClick={() => setForm({ ...form, type })}
                                                 style={{
                                                     flex: 1, padding: '12px', border: 'none', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', cursor: 'pointer',
                                                     backgroundColor: form.type === type ? navy : 'transparent',
@@ -144,10 +144,10 @@ const DrivesPanel = () => {
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Deployment Date</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         value={form.date}
-                                        onChange={e => setForm({...form, date: e.target.value})}
+                                        onChange={e => setForm({ ...form, date: e.target.value })}
                                         required
                                         style={{ padding: '16px', border: `1px solid ${surfaceDeep}`, backgroundColor: surface, fontSize: '13px', fontWeight: '700', color: navy, outline: 'none' }}
                                     />
@@ -156,9 +156,9 @@ const DrivesPanel = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <label style={{ fontSize: '10px', fontWeight: '900', color: gray600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Specific Instructions / Protocol</label>
-                                <textarea 
+                                <textarea
                                     value={form.description}
-                                    onChange={(e) => setForm({...form, description: e.target.value})}
+                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
                                     required
                                     rows="5"
                                     placeholder="Provide detailed mission parameters for the localized booth officials..."
@@ -167,8 +167,8 @@ const DrivesPanel = () => {
                             </div>
 
                             {message && (
-                                <div style={{ 
-                                    padding: '20px', 
+                                <div style={{
+                                    padding: '20px',
                                     backgroundColor: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
                                     borderLeft: `4px solid ${message.type === 'success' ? '#22c55e' : '#ef4444'}`,
                                     color: message.type === 'success' ? '#166534' : '#991b1b',
@@ -178,11 +178,11 @@ const DrivesPanel = () => {
                                 </div>
                             )}
 
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={loading}
-                                style={{ 
-                                    backgroundColor: navy, color: white, padding: '20px', border: 'none', fontSize: '11px', fontWeight: '900', 
+                                style={{
+                                    backgroundColor: navy, color: white, padding: '20px', border: 'none', fontSize: '11px', fontWeight: '900',
                                     textTransform: 'uppercase', letterSpacing: '0.4em', cursor: loading ? 'not-allowed' : 'pointer',
                                     borderBottom: `4px solid ${saffron}`
                                 }}
@@ -206,7 +206,7 @@ const DrivesPanel = () => {
                                     "All actions are logged for national performance analytics."
                                 ].map((text, i) => (
                                     <li key={i} style={{ display: 'flex', gap: '16px', color: '#cbd5e1', fontSize: '12px', lineHeight: '1.6' }}>
-                                        <span style={{ color: saffron, fontWeight: '900' }}>0{i+1}</span>
+                                        <span style={{ color: saffron, fontWeight: '900' }}>0{i + 1}</span>
                                         {text}
                                     </li>
                                 ))}
@@ -234,7 +234,7 @@ const DrivesPanel = () => {
                         <div style={{ width: '4px', height: '16px', backgroundColor: saffron }} />
                         Recent Operational Deployments
                     </h3>
-                    
+
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <thead>
@@ -259,7 +259,7 @@ const DrivesPanel = () => {
                                             <td style={{ padding: '16px', fontWeight: '700', color: navy }}>{d.title}</td>
                                             <td style={{ padding: '16px', fontWeight: '800', color: gray600 }}>BOOTH-{d.booth_id}</td>
                                             <td style={{ padding: '16px' }}>
-                                                <span style={{ 
+                                                <span style={{
                                                     fontSize: '9px', fontWeight: '900', padding: '4px 8px', backgroundColor: d.type === 'Security' ? '#fef2f2' : '#f0f9ff',
                                                     color: d.type === 'Security' ? '#ef4444' : '#0369a1', border: `1px solid ${d.type === 'Security' ? '#fecaca' : '#bae6fd'}`,
                                                     textTransform: 'uppercase'
