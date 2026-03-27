@@ -49,10 +49,9 @@ def _compute_booth_stats() -> list[dict]:
             )
 
             if bid_col:
-                for bid in df_c[bid_col].dropna().astype(str).str.strip().unique():
-                    booth_ids.add(bid)
-
                 for bid, grp in df_c.groupby(df_c[bid_col].astype(str).str.strip()):
+                    if bid not in booth_ids:
+                        continue
                     total = len(grp)
                     open_n = 0
                     resolved_n = 0

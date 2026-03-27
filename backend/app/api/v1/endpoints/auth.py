@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from pathlib import Path
+import pandas as pd
+import re
+
 from app.core.security import (
     create_access_token,
     get_current_user,
@@ -48,6 +52,27 @@ class UserResponse(BaseModel):
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(body: RegisterRequest, session: Session = Depends(get_session)):
     """Create a new user account and return a JWT."""
+    if body.role == "booth":
+        match = re.match(r'^booth_(.*)@', body.email)
+        if match:
+            booth_id = match.group(1).strip()
+            voters_csv = Path("data/uploads/voters.csv")
+            valid_booths = set()
+            if voters_csv.exists():
+                try:
+                    df = pd.read_csv(voters_csv, dtype=str)
+                    col = "booth_id" if "booth_id" in df.columns else "Booth_id"
+                    if col in df.columns:
+                        valid_booths = set(df[col].dropna().str.strip().unique())
+                except Exception:
+                    pass
+            
+            if booth_id not in valid_booths:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid Booth ID: Not found in voters registry."
+                )
+
     existing = session.exec(select(User).where(User.email == body.email)).first()
     if existing:
         raise HTTPException(

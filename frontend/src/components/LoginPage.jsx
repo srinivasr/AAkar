@@ -22,6 +22,7 @@ export default function LoginPage() {
     const [boothIdInput, setBoothIdInput] = useState('');
     const [nameInput, setNameInput] = useState('');
     const [passwordInput, setPasswordInput] = useState('');
+    const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login, signup } = useAuth();
@@ -29,6 +30,12 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (view === 'signup' && passwordInput !== confirmPasswordInput) {
+            setError('Passwords do not match.');
+            return;
+        }
+
         setLoading(true);
 
         const email = userType === 'booth'
@@ -219,7 +226,7 @@ export default function LoginPage() {
                                     </>
                                 )}
                                 <FlatField label="Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" value={passwordInput} onChange={setPasswordInput} />
-                                <FlatField label="Confirm Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" />
+                                <FlatField label="Confirm Password" icon={<Lock size={16} />} placeholder="••••••••" type="password" value={confirmPasswordInput} onChange={setConfirmPasswordInput} />
 
                                 <button type="submit" disabled={loading} style={{
                                     width: '100%',
