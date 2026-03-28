@@ -114,12 +114,29 @@ def ask_question(question=None, shortcut=None):
         graph = {"nodes": [], "edges": []}
 
     # 7. Generate answer
+    shortcut_prompts = {
+        "VOTERS_BY_ISSUE": "Analyze the correlation between voters and the complaints/issues they have reported. Identify common issues and any demographic trends (e.g., age, location) correlated with specific types of issues.",
+        "SENIOR_VOTERS": "Summarize the statistics and demographic details of senior citizen voters. Mention any notable patterns.",
+        "YOUTH_VOTERS": "Summarize the statistics and demographic details of youth voters. Mention any notable patterns.",
+        "HOUSE_MEMBERS": "Analyze the gender distribution and basic statistics of household members in the dataset.",
+        "LIST_HOUSES": "Provide an overview of the household registry distribution.",
+        "list_section": "Provide an analysis of the different voter sections.",
+        "LIST_ALL_VOTERS": "Provide a quick overview of the voter registry.",
+        "SHOW_ALL_RELATIONSHIPS": "Give a brief high-level summary of the overall network ties.",
+        "FULL_GRAPH": "Give a brief high-level summary of the overall network ties.",
+        "AREA_RELATIONS": "Summarize the geographic distribution of voters across areas."
+    }
+
+    target_question = question
+    if not target_question and shortcut:
+        target_question = shortcut_prompts.get(shortcut, shortcut.replace("_", " "))
+
     try:
         answer = ollama_client.summarize_results(
-        question or shortcut,
-        cypher,
-        data
-)
+            target_question,
+            cypher,
+            data
+        )
     except Exception as e:
         answer = f"Query executed but summary failed: {str(e)}"
 

@@ -7,7 +7,7 @@ class OllamaClient:
 
     def __init__(self):
         self.base_url = settings.OLLAMA_URL
-        self.model = "tomasonjo/llama3-text2cypher-demo:8b_4bit"
+        self.model = "qwen2.5:7b"
 
     def generate_cypher(self, schema: str, question: str) -> str:
         """Prompt the LLM with graph schema + user question → read-only Cypher."""
@@ -113,20 +113,29 @@ OUTPUT:"""
 
     def summarize_results(self, question: str, cypher: str, results: list) -> str:
         """Prompt the LLM with question + Cypher + results → natural-language answer."""
-        prompt = f"""You are a helpful civic data analyst. Given a user's question,
-the Cypher query that was executed, and the query results, provide a clear,
-concise natural-language summary.
+        import json
+        
+        # Prevent context overflow by limiting the number of results shown to the LLM
+        safe_results = results[:30]
+        results_str = json.dumps(safe_results, default=str)
+        if len(results) > 30:
+            results_str += f"\n... (and {len(results) - 30} more records)"
+
+        prompt = f"""You are a helpful data analyst. Your goal is to answer the user's QUESTION based ONLY on the provided QUERY RESULTS.
+
+[STRICT INSTRUCTIONS]
+1. Answer the user's QUESTION directly and concisely.
+2. ONLY use the information present in the QUERY RESULTS. Do NOT invent, assume, or hallucinate any details or statistics.
+3. If the results are empty, politely state that no matching data was found.
+4. Do NOT mention the Cypher query or database structure in your summary. Use natural language.
+5. Do NOT summarize irrelevant properties. For example, if the user asks for "women", do not summarize their "Husband" or "Father" relationships unless explicitly requested. Focus ONLY on answering the question.
+6. The data is provided as JSON. Ignore internal IDs or metadata and focus on the semantic content (names, counts, categories, etc).
+7. If a large number of records is returned, provide an aggregate summary (e.g., "There are {len(results)} records found. Some examples include...").
 
 QUESTION: {question}
 
-CYPHER QUERY:
-{cypher}
-
-QUERY RESULTS:
-{results}
-
-Provide a helpful, human-readable answer. Be concise and direct. Do not include
-the Cypher query in your answer. If the results are empty, say so clearly.
+QUERY RESULTS ({len(results)} total records):
+{results_str}
 
 ANSWER:"""
 

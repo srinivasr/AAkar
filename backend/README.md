@@ -9,7 +9,7 @@ The robust Python-based backend for **AAkar**. It connects to a **Neo4j Knowledg
 - **Framework**: FastAPI (Asynchronous, fast, and highly performant)
 - **Database**: Neo4j (Graph Database for profound relationship tracking)
 - **Authentication**: SQLite (via SQLModel) & JWT (Zero-dependency local authentication)
-- **NLP/LLM**: Ollama (Locally hosted `tomasonjo/llama3-text2cypher-demo:8b_4bit`, 8b 4bit models supported)
+- **NLP/LLM**: Ollama (Locally hosted `qwen2.5:7b`, 7b models supported)
 - **Data Extractor**: OpenCV, Tesseract OCR, pdf2image (for multi-threaded PDF ingest)
 - **Testing**: Pytest
 
@@ -40,7 +40,7 @@ backend/
 ### 1. Prerequisites
 - **Python 3.9+**
 - **Neo4j Database**: You can use Neo4j Desktop, Neo4j Aura (Cloud), or a local Docker instance.
-- **Ollama**: Install [Ollama](https://ollama.ai/) and pull your required model (e.g., `ollama run tomasonjo/llama3-text2cypher-demo:8b_4bit` or `llama3`).
+- **Ollama**: Install [Ollama](https://ollama.ai/) and pull your required model (e.g., `ollama run qwen2.5:7b`).
 - **OCR System Dependencies**:  
   You must install Tesseract and Poppler on your host system to process PDF uploads natively:
   ```bash
